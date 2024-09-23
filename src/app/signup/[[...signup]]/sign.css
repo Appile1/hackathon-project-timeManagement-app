@@ -1,0 +1,17 @@
+.sign-in-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh; /* Full viewport height */
+  background-color: #333; /* Dark background for contrast */
+  padding: 20px; /* Padding to ensure content doesn’t touch the edges */
+}
+
+.clerk-sign-in {
+  max-width: 400px; /* Set a max-width for the SignIn component */
+  width: 100%; /* Full width up to the max-width */
+  background-color: #fff; /* White background for the SignIn form */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  padding: 40px; /* Padding inside the SignIn form */
+}
