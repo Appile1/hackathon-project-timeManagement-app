@@ -18,8 +18,8 @@ function Header() {
             <Link href="/" className="nav-link">
               Home
             </Link>
-            <Link href="/reviews" className="nav-link">
-              Reviews
+            <Link href="/promodoroTimer" className="nav-link">
+              Promdoro timer 
             </Link>
             <Link href="/profile" className="nav-link">
               Profile

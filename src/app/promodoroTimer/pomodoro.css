@@ -1,0 +1,83 @@
+/* PomodoroTimer.css */
+
+/* Container styles */
+.pomodoro-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #ef4444;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+/* Timer display styles */
+.timer-display {
+  font-size: 6rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+}
+
+/* Button container styles */
+.button-container {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* Button styles */
+.timer-button {
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.timer-button:hover {
+  background-color: white;
+  color: #ef4444;
+}
+
+.timer-button.active {
+  background-color: white;
+  color: #ef4444;
+}
+
+/* Control button styles */
+.control-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: transparent;
+  color: white;
+  border: 2px solid white;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.control-button:hover {
+  background-color: white;
+  color: #ef4444;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .timer-display {
+    font-size: 4rem;
+  }
+
+  .button-container {
+    flex-direction: column;
+  }
+
+  .timer-button {
+    width: 100%;
+  }
+}
