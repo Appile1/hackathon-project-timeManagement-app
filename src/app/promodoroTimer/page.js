@@ -16,30 +16,24 @@ const PomodoroTimer = () => {
   const [mood, setMood] = useState('');
   const [showMoodInput, setShowMoodInput] = useState(false);
   const [showDurationSettings, setShowDurationSettings] = useState(false);
-  const [playSound] = useSound("/audio.mp3")
-  
-  
-      const toggle = () => setPlaying(!playing);
+  const [playSound, { stop }] = useSound("/audio.mp3", { volume: 0.1 }); // Set volume to 0.1
+
   useEffect(() => {
     let interval = null;
     if (isActive && timeLeft > 0) {
       interval = setInterval(() => {
-        setTimeLeft(timeLeft => timeLeft - 1);
+        setTimeLeft((time) => time - 1);
       }, 1000);
     } else if (timeLeft === 0) {
-    
       setIsActive(false);
-      
-      playAudio()
-
-
+      playAudio();
     }
     return () => clearInterval(interval);
   }, [isActive, timeLeft]);
 
   useEffect(() => {
     // Update timeLeft when mode or durations change
-    switch(mode) {
+    switch (mode) {
       case 'pomodoro':
         setTimeLeft(pomodoroDuration * 60);
         break;
@@ -48,17 +42,23 @@ const PomodoroTimer = () => {
         break;
       case 'longBreak':
         setTimeLeft(longBreakDuration * 60);
+        break;
+      default:
         break;
     }
   }, [mode, pomodoroDuration, shortBreakDuration, longBreakDuration]);
 
   const toggleTimer = () => {
     setIsActive(!isActive);
+    if (isActive) {
+      stop(); // Stop sound if timer is paused
+    }
   };
 
   const resetTimer = () => {
     setIsActive(false);
-    switch(mode) {
+    stop(); // Stop sound when resetting
+    switch (mode) {
       case 'pomodoro':
         setTimeLeft(pomodoroDuration * 60);
         break;
@@ -67,6 +67,8 @@ const PomodoroTimer = () => {
         break;
       case 'longBreak':
         setTimeLeft(longBreakDuration * 60);
+        break;
+      default:
         break;
     }
   };
@@ -74,9 +76,8 @@ const PomodoroTimer = () => {
   const switchMode = (newMode) => {
     setMode(newMode);
     setIsActive(false);
+    stop(); // Stop sound when switching modes
   };
-
-
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -94,36 +95,19 @@ const PomodoroTimer = () => {
   const handleMoodSubmit = (e) => {
     e.preventDefault();
     setShowMoodInput(false);
-    spotify()
-
-    
+    // Add any additional logic here
   };
 
-let check = false
-function playAudio(){
-
-
-if(check){
-  playSound() 
-  check = !check
-}
-
-
-
-}
-
-function spotify(){
-  
-
-
-
-
-}
-
+  function playAudio() {
+    playSound(); // Play sound when time runs out
+    setTimeout(() => {
+      stop(); // Stop sound after 10 seconds
+    }, 10000); // 10000 milliseconds = 10 seconds
+  }
 
   return (
     <div className="pomodoro-container">
-      <div className="timer-display">{formatTime(timeLeft)}</div>
+      <div className="timer-display" style={{ fontWeight: 'bold' }}>{formatTime(timeLeft)}</div>
       <div className="button-container">
         <button 
           onClick={() => switchMode('pomodoro')}
