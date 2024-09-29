@@ -26,7 +26,7 @@ export default function ChatArea() {
     setInputValue(e.target.value);
   };
 
-  const systemPrompt = `Create 10 flashcards based on the following text, focusing on the most important concepts, definitions, and questions. Each flashcard should be formatted as an object in a JSON array with the following properties:
+  const systemPrompt = `Create 9 flashcards based on the following text, focusing on the most important concepts, definitions, and questions. Each flashcard should be formatted as an object in a JSON array with the following properties:
 
   id: A unique identifier for the card (e.g., card1, card2, etc.).
   cardFront: A concise, clear question, term, or concept. This should be something that prompts the learner to recall key information.

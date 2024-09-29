@@ -18,8 +18,8 @@ model User {
   username String
   email    String @id @unique
   password String
+  minutesStudied Int @default(0)
+
 }
 
-model Waitinglist {
-  email String @id @unique
-}
+
