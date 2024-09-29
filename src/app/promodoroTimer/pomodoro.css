@@ -1,5 +1,19 @@
 /* PomodoroTimer.css */
 
+:root {
+  --primary-color: #ef4444;
+  --text-color: #ffffff;
+  --hover-color: #f87171;
+  --active-color: #dc2626;
+  --button-text: #111827;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', Arial, sans-serif;
+}
+
 /* Container styles */
 .pomodoro-container {
   display: flex;
@@ -7,16 +21,18 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #ef4444;
-  color: white;
-  font-family: Arial, sans-serif;
+  background-color: var(--primary-color);
+  color: var(--text-color);
+  padding: 2rem;
+  transition: background-color 0.3s ease;
 }
 
 /* Timer display styles */
 .timer-display {
-  font-size: 6rem;
-  font-weight: bold;
+  font-size: 8rem;
+  font-weight: 700;
   margin-bottom: 2rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Button container styles */
@@ -27,24 +43,35 @@
 }
 
 /* Button styles */
-.timer-button {
-  background-color: transparent;
-  color: white;
-  border: 2px solid white;
-  padding: 0.5rem 1rem;
+.timer-button,
+.control-button,
+.settings-button,
+.mood-button {
+  background-color: var(--text-color);
+  color: var(--button-text);
+  border: none;
+  padding: 0.75rem 1.5rem;
   font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+  transition: all 0.3s ease;
+  border-radius: 9999px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.timer-button:hover {
-  background-color: white;
-  color: #ef4444;
+.timer-button:hover,
+.control-button:hover,
+.settings-button:hover,
+.mood-button:hover {
+  background-color: var(--hover-color);
+  color: var(--text-color);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 
 .timer-button.active {
-  background-color: white;
-  color: #ef4444;
+  background-color: var(--active-color);
+  color: var(--text-color);
 }
 
 /* Control button styles */
@@ -52,32 +79,117 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-  background-color: transparent;
-  color: white;
-  border: 2px solid white;
-  cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
 }
 
-.control-button:hover {
-  background-color: white;
-  color: #ef4444;
+/* Settings and mood button styles */
+.settings-button,
+.mood-button {
+  margin-top: 1rem;
+  background-color: transparent;
+  border: 2px solid var(--text-color);
+  color: var(--text-color);
+}
+
+.settings-button:hover,
+.mood-button:hover {
+  background-color: var(--text-color);
+  color: var(--primary-color);
+}
+
+/* Duration settings styles */
+.duration-settings {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.duration-input {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.duration-input label {
+  margin-right: 1rem;
+  font-weight: 500;
+}
+
+.duration-input input {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem;
+  color: var(--text-color);
+  font-size: 1rem;
+  width: 60px;
+}
+
+/* Mood form styles */
+.mood-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.mood-input {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+.mood-submit {
+  background-color: var(--text-color);
+  color: var(--primary-color);
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mood-submit:hover {
+  background-color: var(--hover-color);
+  color: var(--text-color);
+}
+
+.mood-display {
+  margin-top: 1rem;
+  font-style: italic;
 }
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
   .timer-display {
-    font-size: 4rem;
+    font-size: 5rem;
   }
 
   .button-container {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .timer-button {
+  .timer-button,
+  .control-button,
+  .settings-button,
+  .mood-button {
     width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .control-button {
+    width: 3.5rem;
+    height: 3.5rem;
+    margin: 0 auto;
   }
 }
