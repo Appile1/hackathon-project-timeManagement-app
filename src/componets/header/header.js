@@ -9,7 +9,7 @@ const navItems = [
   { name: "Home", href: "/" },
   { name: "Flashcards", href: "/generate" },
   { name: "Memory", href: "/memory" },
-  { name: "Profile", href: "/profile" },
+  { name: "Notes", href: "/notes" },
   { name: "Leaderboard", href: "/leaderboard" },
 ];
 
