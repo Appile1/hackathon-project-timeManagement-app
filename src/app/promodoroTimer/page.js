@@ -1,83 +1,120 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, RotateCcw, Settings, Smile } from 'lucide-react';
+import './pomodoro.css'
 import useSound from 'use-sound';
 
-import './pomodoro.css';
+const TIMER_MODES = {
+  POMODORO: 'pomodoro',
+  SHORT_BREAK: 'shortBreak',
+  LONG_BREAK: 'longBreak',
+};
+
+const MOODS = {
+  FOCUSED: 'focused',
+  DISTRACTED: 'distracted',
+  ENERGETIC: 'energetic',
+  TIRED: 'tired',
+  STRESSED: 'stressed',
+  RELAXED: 'relaxed',
+  MOTIVATED: 'motivated',
+  UNMOTIVATED: 'unmotivated',
+  CREATIVE: 'creative',
+  BLOCKED: 'blocked',
+};
 
 const PomodoroTimer = () => {
-  const [mode, setMode] = useState('pomodoro');
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [mode, setMode] = useState(TIMER_MODES.POMODORO);
+  const [timers, setTimers] = useState({
+    [TIMER_MODES.POMODORO]: 25 * 60,
+    [TIMER_MODES.SHORT_BREAK]: 5 * 60,
+    [TIMER_MODES.LONG_BREAK]: 15 * 60,
+  });
   const [isActive, setIsActive] = useState(false);
-  const [pomodoroDuration, setPomodoroDuration] = useState(25);
-  const [shortBreakDuration, setShortBreakDuration] = useState(5);
-  const [longBreakDuration, setLongBreakDuration] = useState(15);
+  const [durations, setDurations] = useState({
+    [TIMER_MODES.POMODORO]: 25,
+    [TIMER_MODES.SHORT_BREAK]: 5,
+    [TIMER_MODES.LONG_BREAK]: 15,
+  });
   const [mood, setMood] = useState('');
   const [showMoodInput, setShowMoodInput] = useState(false);
   const [showDurationSettings, setShowDurationSettings] = useState(false);
-  const [playSound, { stop }] = useSound("/audio.mp3", { volume: 0.1 }); // Set volume to 0.1
+  const [moodAction, setMoodAction] = useState('');
+  const [backgroundColor, setBackgroundColor] = useState('#ef4444');
+
+  const [playSound, {stop: stopSound}] = useSound("/audio.mp3");
 
   useEffect(() => {
     let interval = null;
-    if (isActive && timeLeft > 0) {
+    if (isActive && timers[mode] > 0) {
       interval = setInterval(() => {
-        setTimeLeft((time) => time - 1);
+        setTimers(prevTimers => ({
+          ...prevTimers,
+          [mode]: prevTimers[mode] - 1
+        }));
       }, 1000);
-    } else if (timeLeft === 0) {
+    } else if (timers[mode] === 0) {
+      playAudio()
       setIsActive(false);
-      playAudio();
+      
     }
     return () => clearInterval(interval);
-  }, [isActive, timeLeft]);
+  }, [isActive, mode, timers, playSound]);
 
   useEffect(() => {
-    // Update timeLeft when mode or durations change
-    switch (mode) {
-      case 'pomodoro':
-        setTimeLeft(pomodoroDuration * 60);
-        break;
-      case 'shortBreak':
-        setTimeLeft(shortBreakDuration * 60);
-        break;
-      case 'longBreak':
-        setTimeLeft(longBreakDuration * 60);
-        break;
-      default:
-        break;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mode', mode);
+      localStorage.setItem('timers', JSON.stringify(timers));
+      localStorage.setItem('isActive', isActive.toString());
+      localStorage.setItem('durations', JSON.stringify(durations));
+      localStorage.setItem('mood', mood);
+      localStorage.setItem('backgroundColor', backgroundColor);
     }
-  }, [mode, pomodoroDuration, shortBreakDuration, longBreakDuration]);
+  }, [mode, timers, isActive, durations, mood, backgroundColor]);
+ 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedMode = localStorage.getItem('mode');
+      const savedTimers = JSON.parse(localStorage.getItem('timers'));
+      const savedIsActive = localStorage.getItem('isActive') === 'true';
+      const savedDurations = JSON.parse(localStorage.getItem('durations'));
+      const savedMood = localStorage.getItem('mood');
+      const savedBackgroundColor = localStorage.getItem('backgroundColor');
+
+      if (savedMode) setMode(savedMode);
+      if (savedTimers) setTimers(savedTimers);
+      if (savedIsActive) setIsActive(savedIsActive);
+      if (savedDurations) setDurations(savedDurations);
+      if (savedMood) setMood(savedMood);
+      if (savedBackgroundColor) setBackgroundColor(savedBackgroundColor);
+    }
+  }, []);
 
   const toggleTimer = () => {
     setIsActive(!isActive);
-    if (isActive) {
-      stop(); // Stop sound if timer is paused
-    }
   };
 
   const resetTimer = () => {
+    stop()
     setIsActive(false);
-    stop(); // Stop sound when resetting
-    switch (mode) {
-      case 'pomodoro':
-        setTimeLeft(pomodoroDuration * 60);
-        break;
-      case 'shortBreak':
-        setTimeLeft(shortBreakDuration * 60);
-        break;
-      case 'longBreak':
-        setTimeLeft(longBreakDuration * 60);
-        break;
-      default:
-        break;
-    }
+    setTimers(prevTimers => ({
+      ...prevTimers,
+      [mode]: durations[mode] * 60
+    }));
   };
 
   const switchMode = (newMode) => {
-    setMode(newMode);
-    setIsActive(false);
-    stop(); // Stop sound when switching modes
+    if (mode !== newMode) {
+      setMode(newMode);
+      setIsActive(false);
+    }
   };
+
+  function playAudio(){
+
+    playSound()
+  }
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -85,45 +122,107 @@ const PomodoroTimer = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleDurationChange = (e, setter) => {
+  const handleDurationChange = (e, timerKey) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value > 0) {
-      setter(value);
+      setDurations(prevDurations => ({
+        ...prevDurations,
+        [timerKey]: value
+      }));
+      setTimers(prevTimers => ({
+        ...prevTimers,
+        [timerKey]: value * 60
+      }));
     }
   };
 
-  const handleMoodSubmit = (e) => {
-    e.preventDefault();
+  const handleMoodSubmit = (newMood) => {
+    setMood(newMood);
     setShowMoodInput(false);
-    // Add any additional logic here
+    handleMood(newMood);
   };
 
-  function playAudio() {
-    playSound(); // Play sound when time runs out
-    setTimeout(() => {
-      stop(); // Stop sound after 10 seconds
-    }, 10000); // 10000 milliseconds = 10 seconds
-  }
+  const handleMood = (currentMood) => {
+    let action = '';
+    let newBackgroundColor = backgroundColor;
+
+    switch(currentMood) {
+      case MOODS.FOCUSED:
+        action = "Playing ambient sounds to maintain your focus. Timer settings optimized for deep work.";
+        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 30, [TIMER_MODES.SHORT_BREAK]: 5}));
+        newBackgroundColor = '#e6f3ff';
+        break;
+      case MOODS.DISTRACTED:
+        action = "Enabling website blocker for common distractions. Shortened work sessions to help regain focus.";
+        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 15, [TIMER_MODES.SHORT_BREAK]: 3}));
+        newBackgroundColor = '#fff2e6';
+        break;
+      case MOODS.ENERGETIC:
+        action = "Extended work sessions to capitalize on your energy. Upbeat background music enabled.";
+        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 40, [TIMER_MODES.SHORT_BREAK]: 5}));
+        newBackgroundColor = '#e6ffe6';
+        break;
+      case MOODS.TIRED:
+        action = "Shortened work sessions with longer breaks. Gentle reminder to stay hydrated.";
+        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 20, [TIMER_MODES.SHORT_BREAK]: 10}));
+        newBackgroundColor = '#f3e6ff';
+        break;
+      case MOODS.STRESSED:
+        action = "Playing calming music. Adjusted timer for more frequent breaks. Remember to take deep breaths.";
+        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 20, [TIMER_MODES.SHORT_BREAK]: 7}));
+        newBackgroundColor = '#e6fff2';
+        break;
+      case MOODS.RELAXED:
+        action = "Gentle background sounds enabled. Timer set for balanced work and break periods.";
+        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 25, [TIMER_MODES.SHORT_BREAK]: 5}));
+        newBackgroundColor = '#f0f8ff';
+        break;
+      case MOODS.MOTIVATED:
+        action = "Longer work sessions with short, energizing breaks. Motivational quotes enabled between sessions.";
+        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 35, [TIMER_MODES.SHORT_BREAK]: 3}));
+        newBackgroundColor = '#fff5e6';
+        break;
+      case MOODS.UNMOTIVATED:
+        action = "Shorter, manageable work sessions. Encouraging messages and task breakdown suggestions enabled.";
+        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 15, [TIMER_MODES.SHORT_BREAK]: 5}));
+        newBackgroundColor = '#ffe6e6';
+        break;
+      case MOODS.CREATIVE:
+        action = "Extended work sessions with visual inspiration prompts. Background soundscapes for creativity enabled.";
+        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 45, [TIMER_MODES.SHORT_BREAK]: 10}));
+        newBackgroundColor = '#e6f9ff';
+        break;
+      case MOODS.BLOCKED:
+        action = "Short work sprints with idea generation prompts during breaks. Suggestion: Try a change of environment.";
+        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 10, [TIMER_MODES.SHORT_BREAK]: 5}));
+        newBackgroundColor = '#f2f2f2';
+        break;
+      default:
+        action = "Timer settings unchanged. Remember to adjust your environment for optimal productivity.";
+    }
+    setMoodAction(action);
+    setBackgroundColor(newBackgroundColor);
+  };
 
   return (
-    <div className="pomodoro-container">
-      <div className="timer-display" style={{ fontWeight: 'bold' }}>{formatTime(timeLeft)}</div>
+    <div className="pomodoro-container" style={{ backgroundColor }}>
+      <div className="timer-display">{formatTime(timers[mode])}</div>
       <div className="button-container">
         <button 
-          onClick={() => switchMode('pomodoro')}
-          className={`timer-button ${mode === 'pomodoro' ? 'active' : ''}`}
+          onClick={() => switchMode(TIMER_MODES.POMODORO)}
+          className={`timer-button ${mode === TIMER_MODES.POMODORO ? 'active' : ''}`}
         >
           Pomodoro
         </button>
         <button 
-          onClick={() => switchMode('shortBreak')}
-          className={`timer-button ${mode === 'shortBreak' ? 'active' : ''}`}
+          onClick={() => switchMode(TIMER_MODES.SHORT_BREAK)}
+          className={`timer-button ${mode === TIMER_MODES.SHORT_BREAK ? 'active' : ''}`}
         >
           Short Break
         </button>
         <button 
-          onClick={() => switchMode('longBreak')}
-          className={`timer-button ${mode === 'longBreak' ? 'active' : ''}`}
+          onClick={() => switchMode(TIMER_MODES.LONG_BREAK)}
+          className={`timer-button ${mode === TIMER_MODES.LONG_BREAK ? 'active' : ''}`}
         >
           Long Break
         </button>
@@ -137,58 +236,47 @@ const PomodoroTimer = () => {
         </button>
       </div>
       <button onClick={() => setShowDurationSettings(!showDurationSettings)} className="settings-button">
+        <Settings size={24} className="mr-2" />
         Set Durations
       </button>
       {showDurationSettings && (
         <div className="duration-settings">
-          <div className="duration-input">
-            <label htmlFor="pomodoro">Pomodoro:</label>
-            <input
-              id="pomodoro"
-              type="number"
-              value={pomodoroDuration}
-              onChange={(e) => handleDurationChange(e, setPomodoroDuration)}
-              min="1"
-            />
-          </div>
-          <div className="duration-input">
-            <label htmlFor="shortBreak">Short Break:</label>
-            <input
-              id="shortBreak"
-              type="number"
-              value={shortBreakDuration}
-              onChange={(e) => handleDurationChange(e, setShortBreakDuration)}
-              min="1"
-            />
-          </div>
-          <div className="duration-input">
-            <label htmlFor="longBreak">Long Break:</label>
-            <input
-              id="longBreak"
-              type="number"
-              value={longBreakDuration}
-              onChange={(e) => handleDurationChange(e, setLongBreakDuration)}
-              min="1"
-            />
-          </div>
+          {Object.entries(durations).map(([key, value]) => (
+            <div key={key} className="duration-input">
+              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+              <input
+                id={key}
+                type="number"
+                value={value}
+                onChange={(e) => handleDurationChange(e, key)}
+                min="1"
+              />
+            </div>
+          ))}
         </div>
       )}
-      <button onClick={() => setShowMoodInput(!showMoodInput)} className="mood-button">
-        What's your mood?
+      <button onClick={() => setShowMoodInput(!showMoodInput)} className="mood-button" id="mood-btn">
+        <Smile size={24} className="mr-2" />
+        Set Mood
       </button>
       {showMoodInput && (
-        <form onSubmit={handleMoodSubmit} className="mood-form">
-          <input
-            type="text"
-            value={mood}
-            onChange={(e) => setMood(e.target.value)}
-            placeholder="Enter your mood..."
-            className="mood-input"
-          />
-          <button type="submit" className="mood-submit">Submit</button>
-        </form>
+        <div className="mood-form">
+          <select onChange={(e) => handleMoodSubmit(e.target.value)} value={mood} className="mood-input">
+            <option value="">Select your mood</option>
+            {Object.entries(MOODS).map(([key, value]) => (
+              <option key={key} value={value}>
+                {value.charAt(0).toUpperCase() + value.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
       )}
-      {mood && <div className="mood-display">Current mood: {mood}</div>}
+      {moodAction && (
+        <div className="mood-display">
+          <h3>Mood: {mood}</h3>
+          <p>{moodAction}</p>
+        </div>
+      )}
     </div>
   );
 };

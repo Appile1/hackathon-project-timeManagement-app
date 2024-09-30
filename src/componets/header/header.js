@@ -11,6 +11,7 @@ const navItems = [
   { name: "Memory", href: "/memory" },
   { name: "Notes", href: "/notes" },
   { name: "Leaderboard", href: "/leaderboard" },
+  { name: "PromodoroTimer", href: "/promodoroTimer" }
 ];
 
 export default function Header() {

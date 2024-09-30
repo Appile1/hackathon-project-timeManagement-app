@@ -90,7 +90,7 @@ body {
   margin-top: 1rem;
   background-color: transparent;
   border: 2px solid var(--text-color);
-  color: var(--text-color);
+  color: black;
 }
 
 .settings-button:hover,
