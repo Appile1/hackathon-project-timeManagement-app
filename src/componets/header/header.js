@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X, User, LogIn } from "lucide-react";
+import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 const navItems = [
   { name: "Home", href: "/" },
@@ -11,7 +12,7 @@ const navItems = [
   { name: "Memory", href: "/memory" },
   { name: "Notes", href: "/notes" },
   { name: "Leaderboard", href: "/leaderboard" },
-  { name: "PromodoroTimer", href: "/promodoroTimer" }
+  { name: "PromodoroTimer", href: "/promodoroTimer" },
 ];
 
 export default function Header() {
@@ -66,23 +67,20 @@ export default function Header() {
           </nav>
 
           <div className="hidden md:block">
-            {isSignedIn ? (
-              <button
-                onClick={() => setIsSignedIn(false)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-              >
-                <User className="inline-block mr-2" size={18} />
-                Profile
-              </button>
-            ) : (
-              <button
-                onClick={() => setIsSignedIn(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-              >
-                <LogIn className="inline-block mr-2" size={18} />
-                Sign In
-              </button>
-            )}
+            <SignedIn>
+              <UserButton />
+            </SignedIn>{" "}
+            <SignedOut>
+              <Link href={"/signup"}>
+                <button
+                  onClick={() => setIsSignedIn(true)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                >
+                  <LogIn className="inline-block mr-2" size={18} />
+                  Sign In
+                </button>
+              </Link>
+            </SignedOut>
           </div>
 
           <button

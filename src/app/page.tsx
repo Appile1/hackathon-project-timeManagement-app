@@ -1,140 +1,202 @@
-"use client"
-import React, { useState } from "react";
-import "./page.css";
-import { z } from "zod";
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+"use client";
 
-const schema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }).min(1, "Email address is required"),
-});
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { motion } from "framer-motion";
 
-type FormData = z.infer<typeof schema>;
+const features = [
+  {
+    icon: "📚", // Use emoji for icons as placeholders
+    title: "Flashcards",
+    description: "Create and study flashcards for efficient learning.",
+  },
+  {
+    icon: "🧠", // Use emoji for icons as placeholders
+    title: "Memory",
+    description: "Improve your memory with engaging exercises.",
+  },
+  {
+    icon: "🖊️", // Use emoji for icons as placeholders
+    title: "Notes",
+    description: "Take and organize notes with ease.",
+  },
+  {
+    icon: "🏆", // Use emoji for icons as placeholders
+    title: "Leaderboard",
+    description: "Compete with friends and track your progress.",
+  },
+  {
+    icon: "⏰", // Use emoji for icons as placeholders
+    title: "Pomodoro Timer",
+    description: "Boost productivity with timed work sessions.",
+  },
+];
 
-export default function Home() {
-  const [successMessage, setSuccessMessage] = useState('');
-  const { register, handleSubmit, formState: { errors, isSubmitting }, clearErrors, setError, reset } = useForm<FormData>(
-    {
-      resolver: zodResolver(schema)
-    }
-  );
-  const onSubmit: SubmitHandler<FormData> = async (data: any) => {
-    const res = await fetch('/api/waiting', {
-      method: 'POST',
-      headers: {
-        contentType: 'application/json'
-      },
-      body: JSON.stringify({
-        email: data.email
-      })
-    })
-    if (!res.ok || res.status === 500 || res.status === 409) {
-      console.log("error saving email");
-      const result = await res.json();
-      setError("email", { type: "manual", message: result.message });
-    }
-    else {
+const testimonials = [
+  {
+    name: "Sarah L.",
+    quote: "YourApp has revolutionized my study habits!",
+    rating: 5,
+  },
+  {
+    name: "John D.",
+    quote: "I've seen a significant boost in my productivity.",
+    rating: 4,
+  },
+  {
+    name: "Emily R.",
+    quote: "The Pomodoro Timer is a game-changer for me.",
+    rating: 5,
+  },
+];
 
-      console.log("email saved to waiting list");
-      const result = await res.json();
-      setSuccessMessage(result.message)
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 2000);
-      reset();
-    }
-    setTimeout(() => {
-      clearErrors("email")
-    }, 2000)
-  }
+export default function HomePage() {
+  const [isVisible, setIsVisible] = useState({
+    features: false,
+    testimonials: false,
+  });
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const featuresSection = document.getElementById("features");
+      const testimonialsSection = document.getElementById("testimonials");
+
+      if (featuresSection) {
+        const featureRect = featuresSection.getBoundingClientRect();
+        setIsVisible((prev) => ({
+          ...prev,
+          features: featureRect.top < window.innerHeight,
+        }));
+      }
+
+      if (testimonialsSection) {
+        const testimonialRect = testimonialsSection.getBoundingClientRect();
+        setIsVisible((prev) => ({
+          ...prev,
+          testimonials: testimonialRect.top < window.innerHeight,
+        }));
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-content">
-          <h1>Connect with Fellows. Grow Together.</h1>
-          <p>
-            Join our exclusive community of professionals, build meaningful
-            connections, and elevate your career.
-          </p>
-          <div className="cta-buttons">
-            <a href="/signup" className="btn-primary">
-              Get Started
-            </a>
-            <a href="#features" className="btn-secondary">
-              Learn More
-            </a>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white text-gray-800">
+      <main>
+        {/* Hero Section */}
+        <section className="container mx-auto px-4 py-20 flex flex-col md:flex-row items-center">
+          <div className="md:w-1/2 mb-10 md:mb-0">
+            <motion.h1
+              className="text-4xl md:text-6xl font-bold mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              Boost Your Productivity with YourApp
+            </motion.h1>
+            <motion.p
+              className="text-xl mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              Unlock your potential and achieve more with our all-in-one
+              productivity solution.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200">
+                Get Started
+              </button>
+            </motion.div>
           </div>
-        </div>
-        <div className="mt-10 flex flex-col items-center">
-          <div className=" border-2 py-6 px-4 shadow-md shadow-slate-300 border-white max-w-fit items-center">
-            <h1 className="mb-2 font-semibold text-xl ">Join the waiting list</h1>
-            <form action="#" onSubmit={handleSubmit(onSubmit)} className=" flex justify-center ">
-              <label htmlFor="email"></label>
-              <input type="text" {...register("email")} className="py-1 pl-1 border-2 rounded-lg border-slate-400 focus:outline-none focus:border-orange-800 text-black bg- " />
-              <button type="submit" className="bg-orange-600 px-2 py-1 ml-1 rounded-md hover:bg-orange-700">Notify Me</button>
-            </form>
-            {errors.email && <div className='text-red-600 text-sm font-semibold mr-20'>{errors.email.message}</div>}
-            {successMessage && <div className='text-green-700 text-sm font-semibold mr-14 mt-1'>{successMessage}</div>}
-          </div>
-        </div>
-      </section>
+          <motion.div
+            className="md:w-1/2"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          >
+            <Image
+              src="/placeholder.svg"
+              alt="YourApp Dashboard"
+              width={600}
+              height={400}
+              className="rounded-lg shadow-2xl"
+            />
+          </motion.div>
+        </section>
 
-      {/* Features Section */}
-      <section id="features" className="features-section">
-        <h2>Why Choose Our Networking Hub?</h2>
-        <div className="features-grid">
-          <div className="feature-card">
-            <h3>Tailored Connections</h3>
-            <p>Find fellows with shared interests, skills, and goals.</p>
+        {/* Features Section */}
+        <section id="features" className="bg-white py-20">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Key Features
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={isVisible.features ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  <div className="border rounded-lg p-6 shadow-md">
+                    <div className="text-4xl mb-4">{feature.icon}</div>
+                    <h3 className="text-xl font-semibold mb-2">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 mb-4">{feature.description}</p>
+                    <a
+                      href={`#${feature.title.toLowerCase()}`}
+                      className="text-blue-600 hover:underline inline-flex items-center"
+                    >
+                      Learn More
+                    </a>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-          <div className="feature-card">
-            <h3>Professional Growth</h3>
-            <p>Access resources and opportunities to advance your career.</p>
-          </div>
-          <div className="feature-card">
-            <h3>Community Support</h3>
-            <p>Engage in meaningful discussions and mentorship.</p>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Testimonials Section */}
-      <section className="testimonials-section">
-        <h2>What Our Fellows Say</h2>
-        <div className="testimonials-carousel">
-          {/* Add testimonial cards here */}
-          <div className="testimonial-card">
-            <p>"This platform has been a game-changer for my career!"</p>
-            <span>- Jane Doe</span>
+        {/* Testimonials Section */}
+        <section id="testimonials" className="bg-blue-50 py-20">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              What Our Users Say
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {testimonials.map((testimonial, index) => (
+                <motion.div
+                  key={testimonial.name}
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={isVisible.testimonials ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  <div className="border rounded-lg p-6 shadow-md">
+                    <p className="text-gray-600 mb-4">"{testimonial.quote}"</p>
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold">{testimonial.name}</span>
+                      <div className="flex">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <span key={i} className="text-yellow-400">
+                            ⭐
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-          <div className="testimonial-card">
-            <p>
-              "I've made invaluable connections through the Networking Hub."
-            </p>
-            <span>- John Smith</span>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="how-it-works-section">
-        <h2>How It Works</h2>
-        <div className="steps-grid">
-          <div className="step">
-            <h3>Step 1: Create Your Profile</h3>
-            <p>Tell us about your skills, interests, and goals.</p>
-          </div>
-          <div className="step">
-            <h3>Step 2: Connect with Fellows</h3>
-            <p>Search and connect with professionals in your field.</p>
-          </div>
-          <div className="step">
-            <h3>Step 3: Collaborate & Grow</h3>
-            <p>Engage in projects and discussions to enhance your skills.</p>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
     </div>
   );
 }

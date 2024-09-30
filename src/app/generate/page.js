@@ -147,7 +147,7 @@ export default function ChatArea() {
           Generate Flashcards
         </Button>
       </form>
-      {flashcards.length > 0 && (
+      {/* {flashcards.length > 0 && (
         <Box textAlign="center" mb={4}>
           <Button
             variant="contained"
@@ -158,7 +158,7 @@ export default function ChatArea() {
             Save Flashcards
           </Button>
         </Box>
-      )}
+      )} */}
 
       <Box
         className={`flashcard-container ${

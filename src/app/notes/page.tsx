@@ -15,6 +15,19 @@ import {
   BookIcon,
   CalendarIcon,
 } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import {
+  collection,
+  doc,
+  setDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
+} from "firebase/firestore";
+import { db } from "../firebase.js"; // Adjust the import based on your firebase config
 
 interface Note {
   id: string;
@@ -33,6 +46,7 @@ const categoryOptions = [
 ];
 
 export default function NotesSection() {
+  const { user } = useUser(); // Get current user
   const [notes, setNotes] = useState<Note[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -51,17 +65,28 @@ export default function NotesSection() {
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const storedNotes = localStorage.getItem("notes");
-    if (storedNotes) {
-      setNotes(JSON.parse(storedNotes));
+    if (user) {
+      fetchNotes(); // Fetch notes from Firestore when the user is authenticated
     }
-  }, []);
+  }, [user]);
 
-  useEffect(() => {
-    localStorage.setItem("notes", JSON.stringify(notes));
-  }, [notes]);
+  const fetchNotes = async () => {
+    try {
+      const notesCollection = collection(db, "notes");
+      const notesQuery = query(
+        notesCollection,
+        where("userId", "==", user.id), // Fetch notes for the current user
+        orderBy("updatedAt", "desc")
+      );
+      const querySnapshot = await getDocs(notesQuery);
+      const notesData = querySnapshot.docs.map((doc) => doc.data() as Note);
+      setNotes(notesData);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+    }
+  };
 
-  const addNote = () => {
+  const addNote = async () => {
     if (title.trim() === "" || description.trim() === "") return;
     const newNote: Note = {
       id: uuidv4(),
@@ -71,10 +96,17 @@ export default function NotesSection() {
       updatedAt: Date.now(),
       category: selectedCategory,
     };
-    setNotes([newNote, ...notes]);
-    setTitle("");
-    setDescription("");
-    setSelectedCategory(categoryOptions[0].value);
+
+    try {
+      const noteDocRef = doc(db, "notes", newNote.id);
+      await setDoc(noteDocRef, { ...newNote, userId: user.id });
+      setNotes([newNote, ...notes]);
+      setTitle("");
+      setDescription("");
+      setSelectedCategory(categoryOptions[0].value);
+    } catch (error) {
+      console.error("Error adding note:", error);
+    }
   };
 
   const startEditing = (id: string) => {
@@ -87,25 +119,36 @@ export default function NotesSection() {
     }
   };
 
-  const updateNote = () => {
+  const updateNote = async () => {
     if (editingId) {
-      setNotes(
-        notes.map((note) =>
-          note.id === editingId
-            ? {
-                ...note,
-                title,
-                description,
-                updatedAt: Date.now(),
-                category: selectedCategory,
-              }
-            : note
-        )
+      const updatedNotes = notes.map((note) =>
+        note.id === editingId
+          ? {
+              ...note,
+              title,
+              description,
+              updatedAt: Date.now(),
+              category: selectedCategory,
+            }
+          : note
       );
-      setTitle("");
-      setDescription("");
-      setSelectedCategory(categoryOptions[0].value);
-      setEditingId(null);
+
+      try {
+        const noteDocRef = doc(db, "notes", editingId);
+        await updateDoc(noteDocRef, {
+          title,
+          description,
+          updatedAt: Date.now(),
+          category: selectedCategory,
+        });
+        setNotes(updatedNotes);
+        setTitle("");
+        setDescription("");
+        setSelectedCategory(categoryOptions[0].value);
+        setEditingId(null);
+      } catch (error) {
+        console.error("Error updating note:", error);
+      }
     }
   };
 
@@ -114,46 +157,35 @@ export default function NotesSection() {
     setIsDeleteDialogOpen(true);
   };
 
-  const deleteNote = () => {
+  const deleteNote = async () => {
     if (noteToDelete) {
-      const deletedNote = notes.find((note) => note.id === noteToDelete);
-      if (deletedNote) {
-        setDeletedNotes([deletedNote, ...deletedNotes.slice(0, 4)]);
+      try {
+        await deleteDoc(doc(db, "notes", noteToDelete));
+        const deletedNote = notes.find((note) => note.id === noteToDelete);
+        if (deletedNote) {
+          setDeletedNotes([deletedNote, ...deletedNotes.slice(0, 4)]);
+        }
+        setNotes(notes.filter((note) => note.id !== noteToDelete));
+        setIsDeleteDialogOpen(false);
+        setNoteToDelete(null);
+      } catch (error) {
+        console.error("Error deleting note:", error);
       }
-      setNotes(notes.filter((note) => note.id !== noteToDelete));
-      setIsDeleteDialogOpen(false);
-      setNoteToDelete(null);
     }
   };
 
-  const undoDelete = () => {
+  const undoDelete = async () => {
     if (deletedNotes.length > 0) {
       const [restoredNote, ...remainingDeleted] = deletedNotes;
-      setNotes([restoredNote, ...notes]);
-      setDeletedNotes(remainingDeleted);
+      try {
+        const noteDocRef = doc(db, "notes", restoredNote.id);
+        await setDoc(noteDocRef, { ...restoredNote, userId: user.id });
+        setNotes([restoredNote, ...notes]);
+        setDeletedNotes(remainingDeleted);
+      } catch (error) {
+        console.error("Error restoring note:", error);
+      }
     }
-  };
-
-  const handleNoteChange = (
-    id: string,
-    field: "title" | "description",
-    value: string
-  ) => {
-    setNotes(
-      notes.map((note) =>
-        note.id === id
-          ? { ...note, [field]: value, updatedAt: Date.now() }
-          : note
-      )
-    );
-
-    if (autoSaveTimerRef.current) {
-      clearTimeout(autoSaveTimerRef.current);
-    }
-
-    autoSaveTimerRef.current = setTimeout(() => {
-      localStorage.setItem("notes", JSON.stringify(notes));
-    }, 1000);
   };
 
   const filteredNotes = notes
@@ -171,6 +203,7 @@ export default function NotesSection() {
   return (
     <div className="container mx-auto p-4 max-w-6xl">
       <h1 className="text-3xl font-bold mb-6">Notes Section</h1>
+
       <div className="mb-6 bg-white p-4 rounded-lg shadow">
         <input
           type="text"
@@ -207,27 +240,21 @@ export default function NotesSection() {
           {editingId ? "Update Note" : "Add Note"}
         </button>
       </div>
-      <div className="mb-4 flex flex-wrap gap-2 items-center">
-        <input
-          type="text"
-          placeholder="Search notes..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-grow p-2 border rounded"
-        />
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          className="w-[180px] p-2 border rounded"
-        >
-          <option value="updatedAt">Last Modified</option>
-          <option value="createdAt">Date Created</option>
-          <option value="title">Title</option>
-        </select>
+
+      <input
+        type="text"
+        placeholder="Search notes..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="mb-4 p-2 border rounded w-full"
+      />
+
+      <div className="mb-4">
+        <label className="mr-2">Filter by Category:</label>
         <select
           value={filterCategory || ""}
           onChange={(e) => setFilterCategory(e.target.value || null)}
-          className="w-[180px] p-2 border rounded"
+          className="p-2 border rounded"
         >
           <option value="">All Categories</option>
           {categoryOptions.map((option) => (
@@ -236,97 +263,66 @@ export default function NotesSection() {
             </option>
           ))}
         </select>
-        {deletedNotes.length > 0 && (
-          <button
-            className="p-2 bg-gray-500 text-white rounded"
-            onClick={undoDelete}
+      </div>
+
+      <div className="space-y-4">
+        {filteredNotes.map((note) => (
+          <motion.div
+            key={note.id}
+            className="bg-gray-100 p-4 rounded-lg shadow"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            <UndoIcon className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <AnimatePresence>
-          {filteredNotes.map((note) => (
-            <motion.div
-              key={note.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="h-full flex flex-col bg-white p-4 rounded-lg shadow hover:shadow-lg transition-shadow duration-300">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold">{note.title}</span>
-                  <span className="text-sm bg-gray-200 text-gray-600 rounded px-2 py-1">
-                    {
-                      categoryOptions.find((cat) => cat.value === note.category)
-                        ?.label
-                    }
-                  </span>
-                </div>
-                <div className="mt-2 flex-grow">
-                  <p className="text-sm text-gray-600">
-                    {note.description.length > 100
-                      ? `${note.description.slice(0, 100)}...`
-                      : note.description}
-                  </p>
-                  {note.description.length > 100 && (
-                    <button
-                      className="text-blue-500 mt-2"
-                      onClick={() => startEditing(note.id)}
-                    >
-                      Read more
-                    </button>
-                  )}
-                  <div className="text-xs text-gray-500 mt-2">
-                    <p>Created: {format(note.createdAt, "PPpp")}</p>
-                    <p>Updated: {format(note.updatedAt, "PPpp")}</p>
-                  </div>
-                </div>
-                <div className="mt-4 flex justify-end space-x-2">
-                  <button
-                    className="p-2 border rounded hover:bg-gray-100"
-                    onClick={() => startEditing(note.id)}
-                  >
-                    <PencilIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    className="p-2 border rounded hover:bg-gray-100"
-                    onClick={() => confirmDeleteNote(note.id)}
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </button>
-                </div>
+            <h2 className="font-bold text-xl">{note.title}</h2>
+            <p className="text-gray-700">{note.description}</p>
+            <div className="flex justify-between mt-2">
+              <span className="text-sm text-gray-500">
+                {format(note.updatedAt, "MMM dd, yyyy")}
+              </span>
+              <div className="flex space-x-2">
+                <button onClick={() => startEditing(note.id)}>
+                  <PencilIcon className="h-5 w-5 text-blue-600" />
+                </button>
+                <button onClick={() => confirmDeleteNote(note.id)}>
+                  <TrashIcon className="h-5 w-5 text-red-600" />
+                </button>
               </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+            </div>
+          </motion.div>
+        ))}
       </div>
+
       {isDeleteDialogOpen && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg shadow-lg max-w-sm w-full">
-            <h3 className="text-lg font-bold mb-2">Confirm Deletion</h3>
-            <p className="text-gray-600 mb-4">
-              Are you sure you want to delete this note? This action cannot be
-              undone.
-            </p>
-            <div className="flex justify-end space-x-2">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded shadow">
+            <h3 className="font-bold mb-2">Confirm Delete</h3>
+            <p>Are you sure you want to delete this note?</p>
+            <div className="flex justify-between mt-4">
               <button
-                className="p-2 border rounded"
-                onClick={() => setIsDeleteDialogOpen(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="p-2 bg-red-500 text-white rounded"
                 onClick={deleteNote}
+                className="bg-red-500 text-white p-2 rounded"
               >
                 Delete
+              </button>
+              <button
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="bg-gray-300 p-2 rounded"
+              >
+                Cancel
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {deletedNotes.length > 0 && (
+        <button
+          onClick={undoDelete}
+          className="mt-4 bg-yellow-500 text-white p-2 rounded"
+        >
+          Undo Delete
+        </button>
       )}
     </div>
   );

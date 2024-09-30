@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PlusCircle, X, Heart } from "lucide-react";
+import { db, storage } from "../firebase.js"; // Import the Firebase initialization
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, addDoc, getDocs } from "firebase/firestore";
 
 // Fake data for memories
 const fakeMemories = [
@@ -12,42 +15,40 @@ const fakeMemories = [
     image:
       "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500&q=80",
   },
-  {
-    id: 2,
-    title: "City Lights",
-    description: "Night view of the skyline",
-    image:
-      "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=500&q=80",
-  },
-  {
-    id: 3,
-    title: "Mountain Hike",
-    description: "Breathtaking view from the peak",
-    image:
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500&q=80",
-  },
-  {
-    id: 4,
-    title: "Cozy Cafe",
-    description: "Perfect spot for a rainy day",
-    image:
-      "https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=500&q=80",
-  },
-  {
-    id: 5,
-    title: "Spring Bloom",
-    description: "Cherry blossoms in full bloom",
-    image:
-      "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=500&q=80",
-  },
+  // ... other fake memories
 ];
 
 export default function VisualMemoryRoom() {
-  const [memories, setMemories] = useState(fakeMemories);
+  const [memories, setMemories] = useState([]);
   const [selectedMemory, setSelectedMemory] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
+
+  useEffect(() => {
+    const fetchMemories = async () => {
+      try {
+        const memoriesCollection = collection(db, "memories");
+        const memoriesSnapshot = await getDocs(memoriesCollection);
+        const memoriesList = memoriesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        if (memoriesList.length > 0) {
+          setMemories(memoriesList);
+        } else {
+          setMemories(fakeMemories);
+        }
+      } catch (error) {
+        console.error("Error fetching memories: ", error);
+        // Fall back to fake memories if there's an error
+        setMemories(fakeMemories);
+      }
+    };
+
+    fetchMemories();
+  }, []);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -55,23 +56,35 @@ export default function VisualMemoryRoom() {
     }
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!title || !description || !file) {
       alert("Please fill out all fields and upload an image.");
       return;
     }
 
-    const newMemory = {
-      id: memories.length + 1, // Ensure unique ID
-      title,
-      description,
-      image: URL.createObjectURL(file), // Use a local URL for the uploaded image
-    };
+    try {
+      // Upload image to Firebase Storage
+      const storageRef = ref(storage, `memories/${file.name}`);
+      await uploadBytes(storageRef, file);
+      const imageUrl = await getDownloadURL(storageRef);
 
-    setMemories([...memories, newMemory]);
-    setTitle("");
-    setDescription("");
-    setFile(null);
+      // Save memory data to Firestore
+      const newMemory = {
+        title,
+        description,
+        image: imageUrl, // Use the URL from Firebase Storage
+      };
+
+      await addDoc(collection(db, "memories"), newMemory);
+
+      // Update local state
+      setMemories([...memories, { ...newMemory, id: memories.length + 1 }]);
+      setTitle("");
+      setDescription("");
+      setFile(null);
+    } catch (error) {
+      console.error("Error uploading memory: ", error);
+    }
   };
 
   const handleMemoryClick = (memory) => {
