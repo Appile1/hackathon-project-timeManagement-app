@@ -43,7 +43,7 @@ const PomodoroTimer = () => {
   const [moodAction, setMoodAction] = useState('');
   const [backgroundColor, setBackgroundColor] = useState('#ef4444');
 
-  const [playSound, {stop: stopSound}] = useSound("/audio.mp3");
+  const [playSound, {stop:stopSound}] = useSound("/audio.mp3");
 
   useEffect(() => {
     let interval = null;
@@ -55,12 +55,12 @@ const PomodoroTimer = () => {
         }));
       }, 1000);
     } else if (timers[mode] === 0) {
-      playAudio()
       setIsActive(false);
+     playAudio()
       
     }
     return () => clearInterval(interval);
-  }, [isActive, mode, timers, playSound]);
+  }, [isActive, mode, timers,]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -96,8 +96,9 @@ const PomodoroTimer = () => {
   };
 
   const resetTimer = () => {
-    stop()
+stopSound()
     setIsActive(false);
+    stopSound()
     setTimers(prevTimers => ({
       ...prevTimers,
       [mode]: durations[mode] * 60
@@ -112,7 +113,6 @@ const PomodoroTimer = () => {
   };
 
   function playAudio(){
-
     playSound()
   }
 
@@ -234,6 +234,10 @@ const PomodoroTimer = () => {
         <button onClick={resetTimer} className="control-button">
           <RotateCcw size={24} />
         </button>
+        <button onClick={playSound} className="control-button">
+          <RotateCcw size={24} />
+        </button>
+        
       </div>
       <button onClick={() => setShowDurationSettings(!showDurationSettings)} className="settings-button">
         <Settings size={24} className="mr-2" />
