@@ -12,7 +12,7 @@ const navItems = [
   { name: "Memory", href: "/memory" },
   { name: "Notes", href: "/notes" },
   { name: "Leaderboard", href: "/leaderboard" },
-  { name: "PromodoroTimer", href: "/promodoroTimer" },
+  { name: "PomodoroTimer", href: "/promodoroTimer" },
 ];
 
 export default function Header() {
@@ -41,7 +41,7 @@ export default function Header() {
           <Link href="/" className="flex items-center space-x-2 group">
             <div className="relative w-12 h-12 overflow-hidden rounded-full shadow-md group-hover:shadow-lg transition-shadow duration-300">
               <Image
-                src="/logo.png"
+                src="/title.png"
                 alt="Logo"
                 layout="fill"
                 objectFit="cover"
@@ -49,7 +49,7 @@ export default function Header() {
               />
             </div>
             <span className="text-gray-800 text-xl font-bold group-hover:text-blue-600 transition-colors duration-300">
-              YourApp
+              ProductivityPro
             </span>
           </Link>
 

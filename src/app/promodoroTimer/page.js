@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Settings, Smile } from 'lucide-react';
-import './pomodoro.css'
+import { Play, Pause, RotateCcw, Settings, StopCircle } from 'lucide-react';
+import './pomodoro.css';
 import useSound from 'use-sound';
 
 const TIMER_MODES = {
@@ -43,7 +43,31 @@ const PomodoroTimer = () => {
   const [moodAction, setMoodAction] = useState('');
   const [backgroundColor, setBackgroundColor] = useState('#ef4444');
 
-  const [playSound, {stop:stopSound}] = useSound("/audio.mp3");
+  const [playSound] = useSound("/audio.mp3");
+  const [playFocusedSound, { stop: stopFocusedSound }] = useSound("/Focused.mp3");
+  const [playEnergeticSound, { stop: stopEnergeticSound }] = useSound("/Energetic.mp3");
+  const [playBlockedSound, { stop: stopBlockedSound }] = useSound("/Blocked.mp3");
+  const [playTiredSound, { stop: stopTiredSound }] = useSound("/Tired.mp3");
+  const [playStressedSound, { stop: stopStressedSound }] = useSound("/Stressed.mp3");
+  const [playRelaxedSound, { stop: stopRelaxedSound }] = useSound("/Relaxed.mp3");
+  const [playMotivatedSound, { stop: stopMotivatedSound }] = useSound("/Motivated.mp3");
+  const [playUnmotivatedSound, { stop: stopUnmotivatedSound }] = useSound("/Unmotivated.mp3");
+  const [playCreativeSound, { stop: stopCreativeSound }] = useSound("/Creative.mp3");
+  const [playDistractedSound, { stop: stopDistractedSound }] = useSound("/Distracted.mp3");
+
+  const stopAllSounds = () => {
+    // Stop all sounds
+    stopFocusedSound();
+    stopEnergeticSound();
+    stopBlockedSound();
+    stopTiredSound();
+    stopStressedSound();
+    stopRelaxedSound();
+    stopMotivatedSound();
+    stopUnmotivatedSound();
+    stopCreativeSound();
+    stopDistractedSound();
+  };
 
   useEffect(() => {
     let interval = null;
@@ -51,16 +75,15 @@ const PomodoroTimer = () => {
       interval = setInterval(() => {
         setTimers(prevTimers => ({
           ...prevTimers,
-          [mode]: prevTimers[mode] - 1
+          [mode]: prevTimers[mode] - 1,
         }));
       }, 1000);
     } else if (timers[mode] === 0) {
       setIsActive(false);
-     playAudio()
-      
+      playSound();
     }
     return () => clearInterval(interval);
-  }, [isActive, mode, timers,]);
+  }, [isActive, mode, timers, playSound]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -72,7 +95,7 @@ const PomodoroTimer = () => {
       localStorage.setItem('backgroundColor', backgroundColor);
     }
   }, [mode, timers, isActive, durations, mood, backgroundColor]);
- 
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMode = localStorage.getItem('mode');
@@ -92,16 +115,14 @@ const PomodoroTimer = () => {
   }, []);
 
   const toggleTimer = () => {
-    setIsActive(!isActive);
+    setIsActive(prev => !prev);
   };
 
   const resetTimer = () => {
-stopSound()
     setIsActive(false);
-    stopSound()
     setTimers(prevTimers => ({
       ...prevTimers,
-      [mode]: durations[mode] * 60
+      [mode]: durations[mode] * 60,
     }));
   };
 
@@ -109,12 +130,12 @@ stopSound()
     if (mode !== newMode) {
       setMode(newMode);
       setIsActive(false);
+      setTimers(prevTimers => ({
+        ...prevTimers,
+        [newMode]: durations[newMode] * 60,
+      }));
     }
   };
-
-  function playAudio(){
-    playSound()
-  }
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -127,11 +148,11 @@ stopSound()
     if (!isNaN(value) && value > 0) {
       setDurations(prevDurations => ({
         ...prevDurations,
-        [timerKey]: value
+        [timerKey]: value,
       }));
       setTimers(prevTimers => ({
         ...prevTimers,
-        [timerKey]: value * 60
+        [timerKey]: value * 60,
       }));
     }
   };
@@ -140,62 +161,65 @@ stopSound()
     setMood(newMood);
     setShowMoodInput(false);
     handleMood(newMood);
+    playAudio(newMood); // Play sound when mood is selected
+  };
+
+  const playAudio = (currentMood) => {
+    stopAllSounds(); // Stop all sounds before playing a new one
+    switch (currentMood) {
+      case MOODS.FOCUSED:
+        playFocusedSound();
+        break;
+      case MOODS.ENERGETIC:
+        playEnergeticSound();
+        break;
+      case MOODS.BLOCKED:
+        playBlockedSound();
+        break;
+      case MOODS.TIRED:
+        playTiredSound();
+        break;
+      case MOODS.STRESSED:
+        playStressedSound();
+        break;
+      case MOODS.RELAXED:
+        playRelaxedSound();
+        break;
+      case MOODS.MOTIVATED:
+        playMotivatedSound();
+        break;
+      case MOODS.UNMOTIVATED:
+        playUnmotivatedSound();
+        break;
+      case MOODS.CREATIVE:
+        playCreativeSound();
+        break;
+      case MOODS.DISTRACTED:
+        playDistractedSound();
+        break;
+      default:
+        break;
+    }
   };
 
   const handleMood = (currentMood) => {
     let action = '';
     let newBackgroundColor = backgroundColor;
 
-    switch(currentMood) {
+    switch (currentMood) {
       case MOODS.FOCUSED:
         action = "Playing ambient sounds to maintain your focus. Timer settings optimized for deep work.";
-        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 30, [TIMER_MODES.SHORT_BREAK]: 5}));
+        setDurations(prev => ({ ...prev, [TIMER_MODES.POMODORO]: 30, [TIMER_MODES.SHORT_BREAK]: 5 }));
         newBackgroundColor = '#e6f3ff';
-        break;
-      case MOODS.DISTRACTED:
-        action = "Enabling website blocker for common distractions. Shortened work sessions to help regain focus.";
-        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 15, [TIMER_MODES.SHORT_BREAK]: 3}));
-        newBackgroundColor = '#fff2e6';
         break;
       case MOODS.ENERGETIC:
         action = "Extended work sessions to capitalize on your energy. Upbeat background music enabled.";
-        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 40, [TIMER_MODES.SHORT_BREAK]: 5}));
+        setDurations(prev => ({ ...prev, [TIMER_MODES.POMODORO]: 40, [TIMER_MODES.SHORT_BREAK]: 5 }));
         newBackgroundColor = '#e6ffe6';
         break;
-      case MOODS.TIRED:
-        action = "Shortened work sessions with longer breaks. Gentle reminder to stay hydrated.";
-        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 20, [TIMER_MODES.SHORT_BREAK]: 10}));
-        newBackgroundColor = '#f3e6ff';
-        break;
-      case MOODS.STRESSED:
-        action = "Playing calming music. Adjusted timer for more frequent breaks. Remember to take deep breaths.";
-        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 20, [TIMER_MODES.SHORT_BREAK]: 7}));
-        newBackgroundColor = '#e6fff2';
-        break;
-      case MOODS.RELAXED:
-        action = "Gentle background sounds enabled. Timer set for balanced work and break periods.";
-        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 25, [TIMER_MODES.SHORT_BREAK]: 5}));
-        newBackgroundColor = '#f0f8ff';
-        break;
-      case MOODS.MOTIVATED:
-        action = "Longer work sessions with short, energizing breaks. Motivational quotes enabled between sessions.";
-        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 35, [TIMER_MODES.SHORT_BREAK]: 3}));
-        newBackgroundColor = '#fff5e6';
-        break;
-      case MOODS.UNMOTIVATED:
-        action = "Shorter, manageable work sessions. Encouraging messages and task breakdown suggestions enabled.";
-        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 15, [TIMER_MODES.SHORT_BREAK]: 5}));
-        newBackgroundColor = '#ffe6e6';
-        break;
-      case MOODS.CREATIVE:
-        action = "Extended work sessions with visual inspiration prompts. Background soundscapes for creativity enabled.";
-        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 45, [TIMER_MODES.SHORT_BREAK]: 10}));
-        newBackgroundColor = '#e6f9ff';
-        break;
       case MOODS.BLOCKED:
-        action = "Short work sprints with idea generation prompts during breaks. Suggestion: Try a change of environment.";
-        setDurations(prev => ({...prev, [TIMER_MODES.POMODORO]: 10, [TIMER_MODES.SHORT_BREAK]: 5}));
-        newBackgroundColor = '#f2f2f2';
+        action = "Taking a break to clear your mind. Consider a quick walk or meditation.";
+        newBackgroundColor = '#ffdddd';
         break;
       default:
         action = "Timer settings unchanged. Remember to adjust your environment for optimal productivity.";
@@ -208,24 +232,15 @@ stopSound()
     <div className="pomodoro-container" style={{ backgroundColor }}>
       <div className="timer-display">{formatTime(timers[mode])}</div>
       <div className="button-container">
-        <button 
-          onClick={() => switchMode(TIMER_MODES.POMODORO)}
-          className={`timer-button ${mode === TIMER_MODES.POMODORO ? 'active' : ''}`}
-        >
-          Pomodoro
-        </button>
-        <button 
-          onClick={() => switchMode(TIMER_MODES.SHORT_BREAK)}
-          className={`timer-button ${mode === TIMER_MODES.SHORT_BREAK ? 'active' : ''}`}
-        >
-          Short Break
-        </button>
-        <button 
-          onClick={() => switchMode(TIMER_MODES.LONG_BREAK)}
-          className={`timer-button ${mode === TIMER_MODES.LONG_BREAK ? 'active' : ''}`}
-        >
-          Long Break
-        </button>
+        {Object.values(TIMER_MODES).map((timerMode) => (
+          <button
+            key={timerMode}
+            onClick={() => switchMode(timerMode)}
+            className={`timer-button ${mode === timerMode ? 'active' : ''}`}
+          >
+            {timerMode.replace(/_/g, ' ').toUpperCase()}
+          </button>
+        ))}
       </div>
       <div className="button-container">
         <button onClick={toggleTimer} className="control-button">
@@ -234,53 +249,48 @@ stopSound()
         <button onClick={resetTimer} className="control-button">
           <RotateCcw size={24} />
         </button>
-        <button onClick={playSound} className="control-button">
-          <RotateCcw size={24} />
+        <button onClick={stopAllSounds} className="control-button">
+          <StopCircle size={24} />
+          Stop Music
         </button>
-        
       </div>
-      <button onClick={() => setShowDurationSettings(!showDurationSettings)} className="settings-button">
+      <button onClick={() => setShowDurationSettings(prev => !prev)} className="settings-button">
         <Settings size={24} className="mr-2" />
         Set Durations
       </button>
       {showDurationSettings && (
         <div className="duration-settings">
           {Object.entries(durations).map(([key, value]) => (
-            <div key={key} className="duration-input">
-              <label htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1)}:</label>
+            <label key={key}>
+              {key.replace(/_/g, ' ').toUpperCase()} Duration:
               <input
-                id={key}
                 type="number"
                 value={value}
                 onChange={(e) => handleDurationChange(e, key)}
-                min="1"
               />
-            </div>
+            </label>
           ))}
         </div>
       )}
-      <button onClick={() => setShowMoodInput(!showMoodInput)} className="mood-button" id="mood-btn">
-        <Smile size={24} className="mr-2" />
-        Set Mood
-      </button>
-      {showMoodInput && (
-        <div className="mood-form">
-          <select onChange={(e) => handleMoodSubmit(e.target.value)} value={mood} className="mood-input">
-            <option value="">Select your mood</option>
-            {Object.entries(MOODS).map(([key, value]) => (
-              <option key={key} value={value}>
-                {value.charAt(0).toUpperCase() + value.slice(1)}
-              </option>
+      <div className="mood-selection">
+        <button onClick={() => setShowMoodInput(prev => !prev)} className="mood-button">
+          Select Mood
+        </button>
+        {showMoodInput && (
+          <div className="mood-input">
+            {Object.values(MOODS).map((moodOption) => (
+              <button
+                key={moodOption}
+                onClick={() => handleMoodSubmit(moodOption)}
+                className="mood-option"
+              >
+                {moodOption}
+              </button>
             ))}
-          </select>
-        </div>
-      )}
-      {moodAction && (
-        <div className="mood-display">
-          <h3>Mood: {mood}</h3>
-          <p>{moodAction}</p>
-        </div>
-      )}
+          </div>
+        )}
+        {mood && <div className="mood-action">{moodAction}</div>}
+      </div>
     </div>
   );
 };

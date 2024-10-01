@@ -35,7 +35,7 @@ const features = [
 const testimonials = [
   {
     name: "Sarah L.",
-    quote: "YourApp has revolutionized my study habits!",
+    quote: "Productivity Pro has revolutionized my study habits!",
     rating: 5,
   },
   {
@@ -94,7 +94,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              Boost Your Productivity with YourApp
+              Boost Your Productivity with Productivity Pro
             </motion.h1>
             <motion.p
               className="text-xl mb-8"
@@ -121,13 +121,7 @@ export default function HomePage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
           >
-            <Image
-              src="/placeholder.svg"
-              alt="YourApp Dashboard"
-              width={600}
-              height={400}
-              className="rounded-lg shadow-2xl"
-            />
+
           </motion.div>
         </section>
 
