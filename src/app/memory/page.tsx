@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PlusCircle, X, Heart } from "lucide-react";
+import { PlusCircle, X } from "lucide-react";
 import { db, storage } from "../firebase.js"; // Import the Firebase initialization
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, getDocs } from "firebase/firestore";
+import { useUser } from "@clerk/nextjs"; // Import Clerk's useUser hook
 
 // Fake data for memories
 const fakeMemories = [
@@ -19,6 +20,7 @@ const fakeMemories = [
 ];
 
 export default function VisualMemoryRoom() {
+  const { user } = useUser(); // Get user information from Clerk
   const [memories, setMemories] = useState([]);
   const [selectedMemory, setSelectedMemory] = useState(null);
   const [title, setTitle] = useState("");
@@ -27,13 +29,17 @@ export default function VisualMemoryRoom() {
 
   useEffect(() => {
     const fetchMemories = async () => {
+      if (!user) return; // If no user, return early
       try {
+        const userId = user.id; // Get the user ID from Clerk
         const memoriesCollection = collection(db, "memories");
         const memoriesSnapshot = await getDocs(memoriesCollection);
-        const memoriesList = memoriesSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const memoriesList = memoriesSnapshot.docs
+          .filter((doc) => doc.data().userId === userId) // Filter documents for the current user
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
 
         if (memoriesList.length > 0) {
           setMemories(memoriesList);
@@ -48,7 +54,7 @@ export default function VisualMemoryRoom() {
     };
 
     fetchMemories();
-  }, []);
+  }, [user]);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -57,28 +63,34 @@ export default function VisualMemoryRoom() {
   };
 
   const handleUpload = async () => {
-    if (!title || !description || !file) {
+    if (!title || !description || !file || !user) {
       alert("Please fill out all fields and upload an image.");
       return;
     }
 
     try {
-      // Upload image to Firebase Storage
-      const storageRef = ref(storage, `memories/${file.name}`);
+      const userId = user.id; // Get the user ID from Clerk
+      // Upload image to Firebase Storage under the user's folder
+      const storageRef = ref(storage, `memories/${userId}/${file.name}`);
       await uploadBytes(storageRef, file);
       const imageUrl = await getDownloadURL(storageRef);
 
-      // Save memory data to Firestore
+      // Save memory data to Firestore under a new document
       const newMemory = {
         title,
         description,
         image: imageUrl, // Use the URL from Firebase Storage
+        userId, // Include the user ID
       };
 
-      await addDoc(collection(db, "memories"), newMemory);
+      await addDoc(collection(db, "memories"), newMemory); // Save memory under the memories collection
 
-      // Update local state
-      setMemories([...memories, { ...newMemory, id: memories.length + 1 }]);
+      // Update local state without duplicates
+      setMemories((prevMemories) => [
+        ...prevMemories,
+        { ...newMemory, id: Date.now() }, // Use a unique id based on the current timestamp
+      ]);
+
       setTitle("");
       setDescription("");
       setFile(null);
@@ -193,9 +205,6 @@ export default function VisualMemoryRoom() {
                 <span className="text-sm text-gray-500">
                   Created on: {new Date().toLocaleDateString()}
                 </span>
-                <button className="text-red-500 hover:text-red-600 transition duration-300">
-                  <Heart size={24} />
-                </button>
               </div>
             </div>
           </div>
