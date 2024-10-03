@@ -46,14 +46,15 @@ const PomodoroTimer = () => {
   const [playSound] = useSound("/audio.mp3");
   const [playFocusedSound, { stop: stopFocusedSound }] = useSound("/Focused.mp3");
   const [playEnergeticSound, { stop: stopEnergeticSound }] = useSound("/Energetic.mp3");
-  const [playBlockedSound, { stop: stopBlockedSound }] = useSound("/Blocked.mp3");
+  const [playDistractedSound, { stop: stopDistractedSound }] = useSound("/Distracted.mp3");
+  const [playBlockedSound, { stop: stopBlockedSound }] = useSound("/Distracted.mp3");
   const [playTiredSound, { stop: stopTiredSound }] = useSound("/Tired.mp3");
   const [playStressedSound, { stop: stopStressedSound }] = useSound("/Stressed.mp3");
   const [playRelaxedSound, { stop: stopRelaxedSound }] = useSound("/Relaxed.mp3");
   const [playMotivatedSound, { stop: stopMotivatedSound }] = useSound("/Motivated.mp3");
   const [playUnmotivatedSound, { stop: stopUnmotivatedSound }] = useSound("/Unmotivated.mp3");
   const [playCreativeSound, { stop: stopCreativeSound }] = useSound("/Creative.mp3");
-  const [playDistractedSound, { stop: stopDistractedSound }] = useSound("/Distracted.mp3");
+ 
 
   const stopAllSounds = () => {
     // Stop all sounds
@@ -165,6 +166,7 @@ const PomodoroTimer = () => {
   };
 
   const playAudio = (currentMood) => {
+    console.log(currentMood)
     stopAllSounds(); // Stop all sounds before playing a new one
     switch (currentMood) {
       case MOODS.FOCUSED:
