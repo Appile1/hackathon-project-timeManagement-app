@@ -7,28 +7,33 @@ import { motion } from "framer-motion";
 const features = [
   {
     icon: "📚",
-    title: "Flashcards",
+    title: "Flashcard",
     description: "Create and study flashcards for efficient learning.",
+    link:"generate"
   },
   {
     icon: "🧠",
     title: "Memory",
     description: "Improve your memory with engaging exercises.",
+    link:"memory"
   },
   {
     icon: "🖊️",
     title: "Notes",
     description: "Take and organize notes with ease.",
+    link:"notes"
   },
   {
     icon: "🏆",
     title: "Leaderboard",
     description: "Compete with friends and track your progress.",
+    link:"leaderboard"
   },
   {
     icon: "⏰",
     title: "Pomodoro Timer",
     description: "Boost productivity with timed work sessions.",
+    link:"promodoroTimer"
   },
 ];
 const testimonials = [
@@ -146,7 +151,7 @@ export default function HomePage() {
                     </h3>
                     <p className="text-gray-600 mb-4">{feature.description}</p>
                     <a
-                      href={`/${feature.title.toLowerCase()}`}
+                      href={`/${feature.link}`}
                       className="text-blue-600 hover:underline inline-flex items-center"
                     >
                       Learn More
