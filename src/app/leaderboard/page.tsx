@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+
 interface MedalIconProps {
   rank: number;
 }
@@ -92,6 +93,7 @@ const MedalIcon = ({ rank }: MedalIconProps) => {
     2: "text-gray-400",
     3: "text-amber-600",
   };
+
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -103,18 +105,15 @@ const MedalIcon = ({ rank }: MedalIconProps) => {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={colors[rank]}
+      className={colors[String(rank)]} // Convert rank to string
     >
       <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12" />
       <path d="M15 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-      <path d="M9 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-      <path d="M12 6h.01" />
-      <path d="M11 6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3.96a1 1 0 0 1-.804.98l-1.196.24a1 1 0 0 1-.392 0l-1.196-.24A1 1 0 0 1 11 9.96V6Z" />
     </svg>
   );
 };
 
-const formatStudyTime = (hours) => {
+const formatStudyTime = (hours: number) => {
   const days = Math.floor(hours / 24);
   const remainingHours = hours % 24;
 
@@ -128,7 +127,7 @@ const formatStudyTime = (hours) => {
 };
 
 export default function Leaderboard() {
-  const [hoveredRank, setHoveredRank] = useState(null);
+  const [hoveredRank, setHoveredRank] = useState<number | null>(null);
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
