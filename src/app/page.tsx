@@ -6,32 +6,36 @@ import { motion } from "framer-motion";
 
 const features = [
   {
-    icon: "📚", // Use emoji for icons as placeholders
+    icon: "📚",
     title: "Flashcards",
     description: "Create and study flashcards for efficient learning.",
+    link: "/generate", // Link to a specific page
   },
   {
-    icon: "🧠", // Use emoji for icons as placeholders
+    icon: "🧠",
     title: "Memory",
     description: "Improve your memory with engaging exercises.",
+    link: "/memory",
   },
   {
-    icon: "🖊️", // Use emoji for icons as placeholders
+    icon: "🖊️",
     title: "Notes",
     description: "Take and organize notes with ease.",
+    link: "/notes",
   },
   {
-    icon: "🏆", // Use emoji for icons as placeholders
+    icon: "🏆",
     title: "Leaderboard",
     description: "Compete with friends and track your progress.",
+    link: "/leaderboard",
   },
   {
-    icon: "⏰", // Use emoji for icons as placeholders
+    icon: "⏰",
     title: "Pomodoro Timer",
     description: "Boost productivity with timed work sessions.",
+    link: "/promodoroTimer",
   },
 ];
-
 const testimonials = [
   {
     name: "Sarah L.",
@@ -110,9 +114,12 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200">
+              <a
+                href="/signup"
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition duration-200"
+              >
                 Get Started
-              </button>
+              </a>
             </motion.div>
           </div>
           <motion.div
@@ -120,9 +127,7 @@ export default function HomePage() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
-          >
-
-          </motion.div>
+          ></motion.div>
         </section>
 
         {/* Features Section */}
@@ -133,26 +138,29 @@ export default function HomePage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((feature, index) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={isVisible.features ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <div className="border rounded-lg p-6 shadow-md">
-                    <div className="text-4xl mb-4">{feature.icon}</div>
-                    <h3 className="text-xl font-semibold mb-2">
-                      {feature.title}
-                    </h3>
-                    <p className="text-gray-600 mb-4">{feature.description}</p>
-                    <a
-                      href={`#${feature.title.toLowerCase()}`}
-                      className="text-blue-600 hover:underline inline-flex items-center"
-                    >
-                      Learn More
-                    </a>
-                  </div>
-                </motion.div>
+                <a href={feature.link} key={feature.title}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={isVisible.features ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                  >
+                    <div className="border rounded-lg p-6 shadow-md">
+                      <div className="text-4xl mb-4">{feature.icon}</div>
+                      <h3 className="text-xl font-semibold mb-2">
+                        {feature.title}
+                      </h3>
+                      <p className="text-gray-600 mb-4">
+                        {feature.description}
+                      </p>
+                      <a
+                        href={feature.link}
+                        className="text-blue-600 hover:underline inline-flex items-center"
+                      >
+                        Learn More
+                      </a>
+                    </div>
+                  </motion.div>
+                </a>
               ))}
             </div>
           </div>
