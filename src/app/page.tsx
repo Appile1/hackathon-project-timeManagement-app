@@ -174,7 +174,6 @@ export default function HomePage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {testimonials.map((testimonial, index) => (
-                <a href={features.link} key={features.title}>
                 <motion.div
                   key={testimonial.name}
                   initial={{ opacity: 0, y: 50 }}
@@ -195,7 +194,6 @@ export default function HomePage() {
                     </div>
                   </div>
                 </motion.div>
-                </a>
               ))}
             </div>
           </div>
