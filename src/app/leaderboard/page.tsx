@@ -1,10 +1,6 @@
 "use client";
 import { useState } from "react";
 
-interface MedalIconProps {
-  rank: number;
-}
-
 // Mock data for the leaderboard with anime character images
 const leaderboardData = [
   {
@@ -87,8 +83,8 @@ const loggedInUser = {
   avatar: "https://example.com/anime-character-you.jpg",
 };
 
-const MedalIcon = ({ rank }: MedalIconProps) => {
-  const colors = {
+const MedalIcon = ({ rank }: { rank: number }) => {
+  const colors: { [key: number]: string } = {
     1: "text-yellow-500",
     2: "text-gray-400",
     3: "text-amber-600",
@@ -105,14 +101,13 @@ const MedalIcon = ({ rank }: MedalIconProps) => {
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className={colors[String(rank)]} // Convert rank to string
+      className={colors[rank] || "bg-black"} // No need to convert now
     >
       <path d="M8.21 13.89L7 23l5-3 5 3-1.21-9.12" />
       <path d="M15 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
     </svg>
   );
 };
-
 const formatStudyTime = (hours: number) => {
   const days = Math.floor(hours / 24);
   const remainingHours = hours % 24;
