@@ -1,16 +1,21 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { PlusCircle, X } from "lucide-react";
-import { db, storage } from "../firebase.js"; // Import the Firebase initialization
+import { db, storage } from "../firebase.js";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { collection, addDoc, getDocs } from "firebase/firestore";
-import { useUser } from "@clerk/nextjs"; // Import Clerk's useUser hook
+import { useUser } from "@clerk/nextjs";
 
-// Fake data for memories
-const fakeMemories = [
+type Memory = {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  userId?: string;
+};
+
+const fakeMemories: Memory[] = [
   {
-    id: 1,
+    id: "1",
     title: "Summer Vacation",
     description: "Beautiful beach sunset",
     image:
@@ -20,26 +25,26 @@ const fakeMemories = [
 ];
 
 export default function VisualMemoryRoom() {
-  const { user } = useUser(); // Get user information from Clerk
-  const [memories, setMemories] = useState([]);
-  const [selectedMemory, setSelectedMemory] = useState(null);
+  const { user } = useUser();
+  const [memories, setMemories] = useState<Memory[]>([]); // Set the type for the memories state
+  const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     const fetchMemories = async () => {
-      if (!user) return; // If no user, return early
+      if (!user) return;
       try {
-        const userId = user.id; // Get the user ID from Clerk
+        const userId = user.id;
         const memoriesCollection = collection(db, "memories");
         const memoriesSnapshot = await getDocs(memoriesCollection);
-        const memoriesList = memoriesSnapshot.docs
-          .filter((doc) => doc.data().userId === userId) // Filter documents for the current user
+        const memoriesList: Memory[] = memoriesSnapshot.docs
+          .filter((doc) => doc.data().userId === userId)
           .map((doc) => ({
             id: doc.id,
             ...doc.data(),
-          }));
+          })) as Memory[];
 
         if (memoriesList.length > 0) {
           setMemories(memoriesList);
@@ -48,7 +53,6 @@ export default function VisualMemoryRoom() {
         }
       } catch (error) {
         console.error("Error fetching memories: ", error);
-        // Fall back to fake memories if there's an error
         setMemories(fakeMemories);
       }
     };
@@ -56,7 +60,7 @@ export default function VisualMemoryRoom() {
     fetchMemories();
   }, [user]);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
     }
@@ -69,27 +73,22 @@ export default function VisualMemoryRoom() {
     }
 
     try {
-      const userId = user.id; // Get the user ID from Clerk
-      // Upload image to Firebase Storage under the user's folder
+      const userId = user.id;
       const storageRef = ref(storage, `memories/${userId}/${file.name}`);
       await uploadBytes(storageRef, file);
       const imageUrl = await getDownloadURL(storageRef);
 
-      // Save memory data to Firestore under a new document
-      const newMemory = {
+      const newMemory: Memory = {
         title,
         description,
-        image: imageUrl, // Use the URL from Firebase Storage
-        userId, // Include the user ID
+        image: imageUrl,
+        userId,
+        id: Date.now().toString(), // Temporary id for local state
       };
 
-      await addDoc(collection(db, "memories"), newMemory); // Save memory under the memories collection
+      await addDoc(collection(db, "memories"), newMemory);
 
-      // Update local state without duplicates
-      setMemories((prevMemories) => [
-        ...prevMemories,
-        { ...newMemory, id: Date.now() }, // Use a unique id based on the current timestamp
-      ]);
+      setMemories((prevMemories) => [...prevMemories, newMemory]);
 
       setTitle("");
       setDescription("");
@@ -99,7 +98,7 @@ export default function VisualMemoryRoom() {
     }
   };
 
-  const handleMemoryClick = (memory) => {
+  const handleMemoryClick = (memory: Memory) => {
     setSelectedMemory(memory);
   };
 

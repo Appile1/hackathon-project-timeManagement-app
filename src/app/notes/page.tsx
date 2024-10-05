@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
 import {
-  PlusIcon,
-  SearchIcon,
   TrashIcon,
   PencilIcon,
   UndoIcon,
@@ -74,7 +72,7 @@ export default function NotesSection() {
     setIsLoading(true); // Start loading
     try {
       // Get notes from the `users/{userId}/notes` sub-collection
-      const notesCollection = collection(db, `users/${user.id}/notes`);
+      const notesCollection = collection(db, `users/${user?.id}/notes`);
       const notesQuery = query(notesCollection, orderBy("updatedAt", "desc"));
       const querySnapshot = await getDocs(notesQuery);
       const notesData = querySnapshot.docs.map((doc) => doc.data() as Note);
@@ -99,7 +97,7 @@ export default function NotesSection() {
 
     try {
       // Add the note to `users/{userId}/notes` sub-collection
-      const noteDocRef = doc(db, `users/${user.id}/notes`, newNote.id);
+      const noteDocRef = doc(db, `users/${user?.id}/notes`, newNote.id);
       await setDoc(noteDocRef, newNote);
       setNotes([newNote, ...notes]);
       setTitle("");
@@ -126,7 +124,7 @@ export default function NotesSection() {
 
       try {
         // Update the note in `users/{userId}/notes` sub-collection
-        const noteDocRef = doc(db, `users/${user.id}/notes`, editingId);
+        const noteDocRef = doc(db, `users/${user?.id}/notes`, editingId);
         await updateDoc(noteDocRef, {
           title,
           description,
@@ -153,7 +151,7 @@ export default function NotesSection() {
     if (noteToDelete) {
       try {
         // Delete the note from `users/{userId}/notes` sub-collection
-        await deleteDoc(doc(db, `users/${user.id}/notes`, noteToDelete));
+        await deleteDoc(doc(db, `users/${user?.id}/notes`, noteToDelete));
         const deletedNote = notes.find((note) => note.id === noteToDelete);
         if (deletedNote) {
           setDeletedNotes([deletedNote, ...deletedNotes.slice(0, 4)]);
@@ -172,7 +170,7 @@ export default function NotesSection() {
       const [restoredNote, ...remainingDeleted] = deletedNotes;
       try {
         // Restore the deleted note back to `users/{userId}/notes` sub-collection
-        const noteDocRef = doc(db, `users/${user.id}/notes`, restoredNote.id);
+        const noteDocRef = doc(db, `users/${user?.id}/notes`, restoredNote.id);
         await setDoc(noteDocRef, restoredNote);
         setNotes([restoredNote, ...notes]);
         setDeletedNotes(remainingDeleted);
