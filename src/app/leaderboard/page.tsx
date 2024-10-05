@@ -1,5 +1,9 @@
 "use client";
 import { useState } from "react";
+interface MedalIconProps {
+  rank: number;
+}
+
 // Mock data for the leaderboard with anime character images
 const leaderboardData = [
   {
@@ -82,7 +86,7 @@ const loggedInUser = {
   avatar: "https://example.com/anime-character-you.jpg",
 };
 
-const MedalIcon = ({ rank }) => {
+const MedalIcon = ({ rank }: MedalIconProps) => {
   const colors = {
     1: "text-yellow-500",
     2: "text-gray-400",
