@@ -9,31 +9,26 @@ const features = [
     icon: "📚",
     title: "Flashcards",
     description: "Create and study flashcards for efficient learning.",
-    link: "/generate", // Link to a specific page
   },
   {
     icon: "🧠",
     title: "Memory",
     description: "Improve your memory with engaging exercises.",
-    link: "/memory",
   },
   {
     icon: "🖊️",
     title: "Notes",
     description: "Take and organize notes with ease.",
-    link: "/notes",
   },
   {
     icon: "🏆",
     title: "Leaderboard",
     description: "Compete with friends and track your progress.",
-    link: "/leaderboard",
   },
   {
     icon: "⏰",
     title: "Pomodoro Timer",
     description: "Boost productivity with timed work sessions.",
-    link: "/promodoroTimer",
   },
 ];
 const testimonials = [
@@ -138,29 +133,26 @@ export default function HomePage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((feature, index) => (
-                <a href={feature.link} key={feature.title}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={isVisible.features ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                  >
-                    <div className="border rounded-lg p-6 shadow-md">
-                      <div className="text-4xl mb-4">{feature.icon}</div>
-                      <h3 className="text-xl font-semibold mb-2">
-                        {feature.title}
-                      </h3>
-                      <p className="text-gray-600 mb-4">
-                        {feature.description}
-                      </p>
-                      <a
-                        href={feature.link}
-                        className="text-blue-600 hover:underline inline-flex items-center"
-                      >
-                        Learn More
-                      </a>
-                    </div>
-                  </motion.div>
-                </a>
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={isVisible.features ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  <div className="border rounded-lg p-6 shadow-md">
+                    <div className="text-4xl mb-4">{feature.icon}</div>
+                    <h3 className="text-xl font-semibold mb-2">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 mb-4">{feature.description}</p>
+                    <a
+                      href={`/${feature.title.toLowerCase()}`}
+                      className="text-blue-600 hover:underline inline-flex items-center"
+                    >
+                      Learn More
+                    </a>
+                  </div>
+                </motion.div>
               ))}
             </div>
           </div>
