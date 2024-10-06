@@ -8,9 +8,12 @@ import {
   Box,
   Modal,
 } from "@mui/material";
-import Flashcards from "../../componets/Flashcards/flashcards.js";
+import Flashcards from "../../componets/Flashcards/flashcards";
 import { useUser } from "@clerk/nextjs";
-import "./generate.css";
+import { Loader } from "lucide-react"; // Import from lucide-react for loader
+import "./generate.css"; // Adjust if needed
+import Header from "../../componets/header/header.js";
+import Footer from "../../componets/footer/footer";
 
 export default function ChatArea() {
   const [inputValue, setInputValue] = useState("");
@@ -81,35 +84,6 @@ export default function ChatArea() {
     }
   };
 
-  // const handleSaveFlashcards = async () => {
-  //   if (flashcardName.trim() && flashcards.length > 0 && user) {
-  //     try {
-  //       const userCollectionRef = collection(db, user.id);
-  //       const nameQuery = query(
-  //         userCollectionRef,
-  //         where("name", "==", flashcardName)
-  //       );
-  //       const querySnapshot = await getDocs(nameQuery);
-
-  //       if (!querySnapshot.empty) {
-  //         setSaveError("A flashcard with this name already exists.");
-  //       } else {
-  //         await addDoc(userCollectionRef, {
-  //           name: flashcardName,
-  //           flashcards,
-  //           createdAt: new Date(),
-  //         });
-  //         handleCloseModal();
-  //         setFlashcards([]);
-  //         setFlashcardName("");
-  //         setSaveError("");
-  //       }
-  //     } catch (error) {
-  //       console.error("Error saving flashcards:", error);
-  //     }
-  //   }
-  // };
-
   const handleOpenModal = () => setOpenModal(true);
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -117,123 +91,123 @@ export default function ChatArea() {
   };
 
   return (
-    <Container maxWidth="md">
-      <Box textAlign="center" mb={4}>
-        <Typography variant="h4" gutterBottom>
-          Generate Flashcards
-        </Typography>
-        <Typography variant="body1" paragraph>
-          Enter text to generate flashcards with key concepts and definitions.
-        </Typography>
-      </Box>
-      <form onSubmit={handleSubmit} className="input-form">
-        <TextField
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          placeholder="Type your message..."
-          className="message-input"
-          variant="outlined"
-          fullWidth
-          sx={{ mb: 2 }}
-        />
-        <Button
-          type="submit"
-          variant="contained"
-          color="primary"
-          fullWidth
-          disabled={loading}
-        >
-          Generate Flashcards
-        </Button>
-      </form>
-      {/* {flashcards.length > 0 && (
-        <Box textAlign="center" mb={4}>
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={handleOpenModal}
-            className="save-button"
-          >
-            Save Flashcards
-          </Button>
+    <>
+      <Header />
+      <Container maxWidth="md" className="mx-auto mt-40">
+        <Box textAlign="center" className="mb-8">
+          <Typography variant="h4" gutterBottom className="font-bold">
+            Generate Flashcards
+          </Typography>
+          <Typography variant="body1" paragraph className="text-gray-500">
+            Enter text to generate flashcards with key concepts and definitions.
+          </Typography>
         </Box>
-      )} */}
 
-      <Box
-        className={`flashcard-container ${
-          loading || flashcards.length === 0 ? "flex-mode" : "grid-mode"
-        }`}
-      >
-        {loading ? (
-          <Box className="hamsterwheel-container">...Loading</Box>
-        ) : error ? (
-          <Box textAlign="center">
-            <Typography variant="body1" color="error">
-              {error}
-            </Typography>
-          </Box>
-        ) : flashcards.length > 0 ? (
-          flashcards.map((card, index) => (
-            <Flashcards
-              key={index}
-              cardFront={card.cardFront}
-              cardBack={card.cardBack}
-            />
-          ))
-        ) : (
-          <Typography variant="body1" textAlign="center">
-            No flashcards available. Please enter some text to generate them.
-          </Typography>
-        )}
-      </Box>
-
-      <Modal
-        open={openModal}
-        onClose={handleCloseModal}
-        aria-labelledby="save-flashcards-modal"
-        aria-describedby="modal-to-save-flashcards"
-      >
-        <Box className="modal-content">
-          <Typography
-            id="save-flashcards-modal"
-            variant="h6"
-            component="h2"
-            className="modal-title"
-          >
-            Save Flashcards
-          </Typography>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
           <TextField
-            label="Flashcard Name"
-            value={flashcardName}
-            onChange={(e) => setFlashcardName(e.target.value)}
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            placeholder="Type your message..."
+            variant="outlined"
             fullWidth
-            sx={{ mb: 2 }}
+            className="border rounded-md"
           />
-          {saveError && (
-            <Typography variant="body2" color="error" sx={{ mb: 2 }}>
-              {saveError}
-            </Typography>
-          )}
           <Button
+            type="submit"
             variant="contained"
             color="primary"
-            // onClick={handleSaveFlashcards}
             fullWidth
+            disabled={loading}
+            className="bg-blue-500 hover:bg-blue-600 text-white py-2"
           >
-            Save
+            {loading ? "Generating..." : "Generate Flashcards"}
           </Button>
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={handleCloseModal}
-            fullWidth
-            sx={{ mt: 1 }}
-          >
-            Cancel
-          </Button>
+        </form>
+
+        {/* Flashcards display */}
+        <Box
+          className={
+            flashcards.length > 0
+              ? `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-10 mt-10`
+              : "flex justify-center items-center h-64 mt-10"
+          }
+        >
+          {loading ? (
+            <Box className="flex justify-center items-center h-64">
+              <Loader className="animate-spin text-blue-500 w-12 h-12" />
+            </Box>
+          ) : error ? (
+            <Box className="text-center">
+              <Typography variant="body1" color="error">
+                {error}
+              </Typography>
+            </Box>
+          ) : flashcards.length > 0 ? (
+            flashcards.map((card, index) => (
+              <Flashcards
+                key={index}
+                cardFront={card.cardFront}
+                cardBack={card.cardBack}
+                className="bg-white shadow-md p-4 rounded-lg hover:shadow-lg transition duration-300"
+              />
+            ))
+          ) : (
+            <Typography variant="body1" className="text-center mt-3 font-bold">
+              No flashcards available. Please enter some text to generate them.
+            </Typography>
+          )}
         </Box>
-      </Modal>
-    </Container>
+
+        {/* Modal for saving flashcards */}
+        <Modal
+          open={openModal}
+          onClose={handleCloseModal}
+          aria-labelledby="save-flashcards-modal"
+          aria-describedby="modal-to-save-flashcards"
+        >
+          <Box className="bg-white p-8 rounded-lg shadow-lg mx-auto max-w-md">
+            <Typography
+              id="save-flashcards-modal"
+              variant="h6"
+              className="font-bold mb-4"
+            >
+              Save Flashcards
+            </Typography>
+            <TextField
+              label="Flashcard Name"
+              value={flashcardName}
+              onChange={(e) => setFlashcardName(e.target.value)}
+              fullWidth
+              className="mb-4"
+            />
+            {saveError && (
+              <Typography variant="body2" color="error" className="mb-2">
+                {saveError}
+              </Typography>
+            )}
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              className="bg-green-500 hover:bg-green-600 text-white"
+            >
+              Save
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleCloseModal}
+              fullWidth
+              className="mt-2"
+            >
+              Cancel
+            </Button>
+          </Box>
+        </Modal>
+      </Container>
+      <Footer />
+    </>
   );
 }

@@ -22,10 +22,11 @@ import {
   updateDoc,
   deleteDoc,
   query,
-  where,
   orderBy,
 } from "firebase/firestore";
 import { db } from "../firebase.js"; // Adjust the import based on your firebase config
+import Header from "@/componets/header/header.js";
+import Footer from "@/componets/footer/footer.js";
 
 interface Note {
   id: string;
@@ -50,6 +51,8 @@ export default function NotesSection() {
   const [description, setDescription] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddingNote, setIsAddingNote] = useState(false);
+
   const [sortBy, setSortBy] = useState<"createdAt" | "updatedAt" | "title">(
     "updatedAt"
   );
@@ -75,7 +78,10 @@ export default function NotesSection() {
       const notesCollection = collection(db, `users/${user?.id}/notes`);
       const notesQuery = query(notesCollection, orderBy("updatedAt", "desc"));
       const querySnapshot = await getDocs(notesQuery);
-      const notesData = querySnapshot.docs.map((doc) => doc.data() as Note);
+      const notesData = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Note, "id">),
+      }));
       setNotes(notesData); // Set notes to state
     } catch (error) {
       console.error("Error fetching notes:", error);
@@ -193,171 +199,168 @@ export default function NotesSection() {
     });
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6">Notes Section</h1>
+    <>
+      <Header />
+      <div className="container mx-auto p-4 max-w-6xl">
+        <h1 className="text-3xl font-bold mb-6">Notes Section</h1>
 
-      <div className="mb-6 bg-white p-4 rounded-lg shadow">
+        <div className="mb-6 bg-white p-4 rounded-lg shadow">
+          <input
+            type="text"
+            placeholder="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full mb-2 p-2 border rounded"
+          />
+          <textarea
+            placeholder="Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full mb-2 p-2 border rounded"
+            rows={3}
+          />
+          <div className="flex items-center space-x-2 mb-2">
+            <label className="mr-2">Category:</label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-[180px] p-2 border rounded"
+            >
+              {categoryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={editingId ? updateNote : addNote}
+            className="w-full p-2 bg-blue-500 text-white rounded"
+          >
+            {editingId ? "Update Note" : "Add Note"}
+          </button>
+        </div>
+
         <input
           type="text"
-          placeholder="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full mb-2 p-2 border rounded"
+          placeholder="Search notes..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full mb-6 p-2 border rounded"
         />
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full mb-2 p-2 border rounded"
-          rows={3}
-        />
-        <div className="flex items-center space-x-2 mb-2">
-          <label className="mr-2">Category:</label>
+
+        <div className="mb-6">
+          <label className="mr-2">Sort by:</label>
           <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-[180px] p-2 border rounded"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="p-2 border rounded"
           >
-            {categoryOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            <option value="updatedAt">Last Updated</option>
+            <option value="createdAt">Date Created</option>
+            <option value="title">Title</option>
           </select>
         </div>
-        <button
-          onClick={editingId ? updateNote : addNote}
-          className="w-full p-2 bg-blue-500 text-white rounded"
-        >
-          {editingId ? "Update Note" : "Add Note"}
-        </button>
-      </div>
 
-      <input
-        type="text"
-        placeholder="Search notes..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full mb-6 p-2 border rounded"
-      />
-
-      <div className="mb-6">
-        <label className="mr-2">Sort by:</label>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
-          className="p-2 border rounded"
-        >
-          <option value="updatedAt">Last Updated</option>
-          <option value="createdAt">Date Created</option>
-          <option value="title">Title</option>
-        </select>
-      </div>
-
-      <div className="mb-6">
-        <label className="mr-2">Filter by category:</label>
-        <select
-          value={filterCategory || ""}
-          onChange={(e) => setFilterCategory(e.target.value || null)}
-          className="p-2 border rounded"
-        >
-          <option value="">All</option>
-          {categoryOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading ? (
-          <div>Loading...</div> // Display a loading state
+          <div className="flex justify-center items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
         ) : filteredNotes.length > 0 ? (
-          filteredNotes.map((note) => (
-            <motion.div
-              key={note.id}
-              className="bg-white p-4 rounded-lg shadow"
-            >
-              <div className="flex items-center space-x-2 mb-2">
-                {React.createElement(
-                  categoryOptions.find(
-                    (option) => option.value === note.category
-                  )?.icon || CalendarIcon,
-                  { size: 24 }
-                )}
-                <h2 className="text-xl font-bold">{note.title}</h2>
-              </div>
-              <p>{note.description}</p>
-              <small className="block mt-2 text-gray-500">
-                Last updated: {format(note.updatedAt, "MMM dd, yyyy")}
-              </small>
-              <div className="mt-2 flex space-x-2">
-                <button
-                  onClick={() => {
-                    setTitle(note.title);
-                    setDescription(note.description);
-                    setSelectedCategory(note.category);
-                    setEditingId(note.id);
-                  }}
-                  className="p-2 bg-yellow-500 text-white rounded"
-                >
-                  <PencilIcon size={16} />
-                </button>
-                <button
-                  onClick={() => confirmDeleteNote(note.id)}
-                  className="p-2 bg-red-500 text-white rounded"
-                >
-                  <TrashIcon size={16} />
-                </button>
-              </div>
-            </motion.div>
-          ))
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4  ">
+            {filteredNotes.map((note) => (
+              <motion.div
+                key={note.id}
+                className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+              >
+                <h2 className="font-bold text-lg">{note.title}</h2>
+                <p>{note.description}</p>
+                <p className="text-gray-500 text-sm">
+                  Created: {format(new Date(note.createdAt), "MMM dd, yyyy")}
+                </p>
+                <p className="text-gray-500 text-sm">
+                  Updated: {format(new Date(note.updatedAt), "MMM dd, yyyy")}
+                </p>
+                <div className="flex justify-between mt-4">
+                  <button
+                    onClick={() => {
+                      setEditingId(note.id);
+                      setTitle(note.title);
+                      setDescription(note.description);
+                      setSelectedCategory(note.category);
+                    }}
+                    className="text-blue-500"
+                  >
+                    <PencilIcon className="inline mr-1" /> Edit
+                  </button>
+                  <button
+                    onClick={() => confirmDeleteNote(note.id)}
+                    className="text-red-500"
+                  >
+                    <TrashIcon className="inline mr-1" /> Delete
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         ) : (
           <div>No notes found.</div>
         )}
-      </div>
 
-      <AnimatePresence>
-        {isDeleteDialogOpen && (
-          <motion.div
-            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <p>Are you sure you want to delete this note?</p>
-              <div className="mt-4 flex space-x-2">
-                <button
-                  onClick={deleteNote}
-                  className="p-2 bg-red-500 text-white rounded"
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={() => setIsDeleteDialogOpen(false)}
-                  className="p-2 bg-gray-300 text-black rounded"
-                >
-                  Cancel
-                </button>
+        <AnimatePresence>
+          {isDeleteDialogOpen && (
+            <motion.div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="bg-white p-6 rounded shadow">
+                <h2 className="text-lg mb-4">
+                  Are you sure you want to delete this note?
+                </h2>
+                <div className="flex justify-between">
+                  <button
+                    onClick={deleteNote}
+                    className="bg-red-500 text-white rounded p-2"
+                  >
+                    Yes, Delete
+                  </button>
+                  <button
+                    onClick={() => setIsDeleteDialogOpen(false)}
+                    className="bg-gray-300 rounded p-2"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {deletedNotes.length > 0 && (
-        <div className="fixed bottom-4 right-4 bg-yellow-500 p-4 rounded-lg shadow-lg">
-          <p className="mb-2">Note deleted. Undo?</p>
-          <button
-            onClick={undoDelete}
-            className="p-2 bg-white text-black rounded"
-          >
-            <UndoIcon size={16} />
-          </button>
-        </div>
-      )}
-    </div>
+        {deletedNotes.length > 0 && (
+          <div className="mt-4">
+            <h3 className="font-bold">Recently Deleted Notes:</h3>
+            <div className="flex space-x-2">
+              {deletedNotes.map((note) => (
+                <div key={note.id} className="bg-gray-200 p-2 rounded">
+                  <p>{note.title}</p>
+                </div>
+              ))}
+              <button
+                onClick={undoDelete}
+                className="bg-blue-500 text-white p-2 rounded"
+              >
+                <UndoIcon className="inline mr-1" /> Undo
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      <Footer />
+    </>
   );
 }

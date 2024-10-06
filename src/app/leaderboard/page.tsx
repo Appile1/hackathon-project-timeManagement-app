@@ -1,4 +1,6 @@
 "use client";
+import Footer from "@/componets/footer/footer";
+import Header from "@/componets/header/header";
 import { useState } from "react";
 
 // Mock data for the leaderboard with anime character images
@@ -125,101 +127,106 @@ export default function Leaderboard() {
   const [hoveredRank, setHoveredRank] = useState<number | null>(null);
 
   return (
-    <div className="container mx-auto p-4 md:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">
-        Study Time Leaderboard
-      </h1>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="col-span-1 lg:col-span-2 bg-white shadow-md rounded-lg">
-          <div className="p-4 border-b">
-            <h2 className="text-lg font-semibold">Top Students</h2>
-          </div>
-          <div className="p-4 space-y-4">
-            {leaderboardData.map((student) => (
-              <div
-                key={student.id}
-                className={`flex items-center p-3 rounded-lg transition-all duration-300 ease-in-out
-                  ${
-                    student.rank <= 3
-                      ? "bg-primary/10 shadow-lg"
-                      : "bg-secondary/10"
-                  }
-                  ${hoveredRank === student.rank ? "scale-105" : ""} 
-                  ${
-                    student.rank === 1
-                      ? "ring-2 ring-yellow-500"
-                      : student.rank === 2
-                      ? "ring-2 ring-gray-400"
-                      : student.rank === 3
-                      ? "ring-2 ring-amber-600"
-                      : ""
-                  }`}
-                onMouseEnter={() => setHoveredRank(student.rank)}
-                onMouseLeave={() => setHoveredRank(null)}
-              >
+    <>
+      <Header />
+
+      <div className="container mx-auto p-4 md:p-6 lg:p-8">
+        <h1 className="text-3xl font-bold mb-6 text-center">
+          Study Time Leaderboard
+        </h1>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="col-span-1 lg:col-span-2 bg-white shadow-md rounded-lg">
+            <div className="p-4 border-b">
+              <h2 className="text-lg font-semibold">Top Students</h2>
+            </div>
+            <div className="p-4 space-y-4">
+              {leaderboardData.map((student) => (
                 <div
-                  className={`flex-shrink-0 w-8 h-8 flex items-center justify-center font-bold text-lg
-                  ${
-                    student.rank === 1
-                      ? "text-yellow-500"
-                      : student.rank === 2
-                      ? "text-gray-400"
-                      : student.rank === 3
-                      ? "text-amber-600"
-                      : ""
-                  }`}
+                  key={student.id}
+                  className={`flex items-center p-3 rounded-lg transition-all duration-300 ease-in-out
+                ${
+                  student.rank <= 3
+                    ? "bg-primary/10 shadow-lg"
+                    : "bg-secondary/10"
+                }
+                ${hoveredRank === student.rank ? "scale-105" : ""} 
+                ${
+                  student.rank === 1
+                    ? "ring-2 ring-yellow-500"
+                    : student.rank === 2
+                    ? "ring-2 ring-gray-400"
+                    : student.rank === 3
+                    ? "ring-2 ring-amber-600"
+                    : ""
+                }`}
+                  onMouseEnter={() => setHoveredRank(student.rank)}
+                  onMouseLeave={() => setHoveredRank(null)}
                 >
-                  {student.rank}
-                </div>
-                <div className="ml-2">
-                  <img
-                    src={student.avatar}
-                    alt={student.name}
-                    className="w-10 h-10 rounded-full"
-                  />
-                </div>
-                <div className="ml-4 flex-grow">
-                  <div className="font-semibold">{student.name}</div>
-                  <div className="text-sm text-gray-500">
-                    {formatStudyTime(student.hours)}
+                  <div
+                    className={`flex-shrink-0 w-8 h-8 flex items-center justify-center font-bold text-lg
+                    ${
+                      student.rank === 1
+                        ? "text-yellow-500"
+                        : student.rank === 2
+                        ? "text-gray-400"
+                        : student.rank === 3
+                        ? "text-amber-600"
+                        : ""
+                    }`}
+                  >
+                    {student.rank}
                   </div>
-                </div>
-                {student.rank <= 3 && (
-                  <div className="flex-shrink-0">
-                    <MedalIcon rank={student.rank} />
+                  <div className="ml-2">
+                    <img
+                      src={student.avatar}
+                      alt={student.name}
+                      className="w-10 h-10 rounded-full"
+                    />
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="bg-white shadow-md rounded-lg">
-          <div className="p-4 border-b">
-            <h2 className="text-lg font-semibold">Your Ranking</h2>
-          </div>
-          <div className="p-4 flex flex-col items-center space-y-4">
-            <div className="w-20 h-20">
-              <img
-                src={loggedInUser.avatar}
-                alt={loggedInUser.name}
-                className="rounded-full"
-              />
+                  <div className="ml-4 flex-grow">
+                    <div className="font-semibold">{student.name}</div>
+                    <div className="text-sm text-gray-500">
+                      {formatStudyTime(student.hours)}
+                    </div>
+                  </div>
+                  {student.rank <= 3 && (
+                    <div className="flex-shrink-0">
+                      <MedalIcon rank={student.rank} />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{loggedInUser.name}</div>
-              <div className="text-xl text-gray-500">
-                {formatStudyTime(loggedInUser.hours)}
-              </div>
-              <div className="mt-2 text-lg font-semibold">
-                Rank: {loggedInUser.rank}
-              </div>
+          </div>
+          <div className="bg-white shadow-md rounded-lg">
+            <div className="p-4 border-b">
+              <h2 className="text-lg font-semibold">Your Ranking</h2>
             </div>
-            <div className="text-sm text-center font-medium text-blue-500 mt-4">
-              "Consistency is the key to success. Keep up the great work!"
+            <div className="p-4 flex flex-col items-center space-y-4">
+              <div className="w-20 h-20">
+                <img
+                  src={loggedInUser.avatar}
+                  alt={loggedInUser.name}
+                  className="rounded-full"
+                />
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold">{loggedInUser.name}</div>
+                <div className="text-xl text-gray-500">
+                  {formatStudyTime(loggedInUser.hours)}
+                </div>
+                <div className="mt-2 text-lg font-semibold">
+                  Rank: {loggedInUser.rank}
+                </div>
+              </div>
+              <div className="text-sm text-center font-medium text-blue-500 mt-4">
+                "Consistency is the key to success. Keep up the great work!"
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }
