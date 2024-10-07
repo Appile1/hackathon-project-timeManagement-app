@@ -132,6 +132,12 @@ export default function Header() {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        <button
+          className="absolute top-4 right-4 text-gray-600 hover:text-blue-600 transition-colors duration-300"
+          onClick={() => setIsMenuOpen(false)}
+        >
+          <X size={24} />
+        </button>
         <div className="flex flex-col items-center justify-center h-full space-y-8">
           {navItems.map((item) => (
             <Link
