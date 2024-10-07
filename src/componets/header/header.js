@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, User, LogIn } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 const navItems = [
@@ -18,22 +18,53 @@ const navItems = [
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(false); // Simulated auth state
+  const sidebarRef = useRef(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+
+    // Prevent scrolling when the menu is open
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
+
+  const handleTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    if (isLeftSwipe) {
+      setIsMenuOpen(false);
+    }
+  };
 
   return (
     <header
-      className={` top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
         isScrolled
-          ? "bg-white/80 backdrop-blur-md shadow-lg py-2"
-          : "bg-transparent py-4"
+          ? "bg-white shadow-lg py-2"
+          : "bg-white py-4"
       }`}
     >
       <div className="container mx-auto px-4">
@@ -69,11 +100,10 @@ export default function Header() {
           <div className="hidden md:block">
             <SignedIn>
               <UserButton />
-            </SignedIn>{" "}
+            </SignedIn>
             <SignedOut>
-              <Link href={"/signup"}>
+              <Link href="/signup">
                 <button
-                  onClick={() => setIsSignedIn(true)}
                   className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                 >
                   <LogIn className="inline-block mr-2" size={18} />
@@ -94,9 +124,13 @@ export default function Header() {
 
       {/* Mobile menu */}
       <div
+        ref={sidebarRef}
         className={`md:hidden fixed inset-0 z-50 bg-white transform ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
         } transition-transform duration-300 ease-in-out shadow-2xl`}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <div className="flex flex-col items-center justify-center h-full space-y-8">
           {navItems.map((item) => (
@@ -109,29 +143,20 @@ export default function Header() {
               {item.name}
             </Link>
           ))}
-          {isSignedIn ? (
-            <button
-              onClick={() => {
-                setIsSignedIn(false);
-                setIsMenuOpen(false);
-              }}
-              className="bg-blue-600 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-            >
-              <User className="inline-block mr-2" size={18} />
-              Profile
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                setIsSignedIn(true);
-                setIsMenuOpen(false);
-              }}
-              className="bg-blue-600 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-            >
-              <LogIn className="inline-block mr-2" size={18} />
-              Sign In
-            </button>
-          )}
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
+          <SignedOut>
+            <Link href="/signup">
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="bg-blue-600 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              >
+                <LogIn className="inline-block mr-2" size={18} />
+                Sign In
+              </button>
+            </Link>
+          </SignedOut>
         </div>
       </div>
     </header>
