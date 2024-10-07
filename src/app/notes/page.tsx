@@ -2,16 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
 import {
-  TrashIcon,
-  PencilIcon,
-  UndoIcon,
-  BriefcaseIcon,
-  HomeIcon,
-  BookIcon,
-  CalendarIcon,
+  Trash2,
+  Pencil,
+  Undo2,
+  Briefcase,
+  Home,
+  BookOpen,
+  Calendar,
+  Loader2,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import {
@@ -24,7 +25,7 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import { db } from "../firebase.js"; // Adjust the import based on your firebase config
+import { db } from "../firebase.js";
 import Header from "@/componets/header/header.js";
 import Footer from "@/componets/footer/footer.js";
 
@@ -38,21 +39,20 @@ interface Note {
 }
 
 const categoryOptions = [
-  { value: "work", label: "Work", icon: BriefcaseIcon },
-  { value: "personal", label: "Personal", icon: HomeIcon },
-  { value: "study", label: "Study", icon: BookIcon },
-  { value: "other", label: "Other", icon: CalendarIcon },
+  { value: "work", label: "Work", icon: Briefcase },
+  { value: "personal", label: "Personal", icon: Home },
+  { value: "study", label: "Study", icon: BookOpen },
+  { value: "other", label: "Other", icon: Calendar },
 ];
 
 export default function NotesSection() {
-  const { user } = useUser(); // Get current user
+  const { user } = useUser();
   const [notes, setNotes] = useState<Note[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
-
   const [sortBy, setSortBy] = useState<"createdAt" | "updatedAt" | "title">(
     "updatedAt"
   );
@@ -63,18 +63,17 @@ export default function NotesSection() {
   const [deletedNotes, setDeletedNotes] = useState<Note[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
-      fetchNotes(); // Fetch notes from Firestore when the user is authenticated
+      fetchNotes();
     }
   }, [user]);
 
   const fetchNotes = async () => {
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
     try {
-      // Get notes from the `users/{userId}/notes` sub-collection
       const notesCollection = collection(db, `users/${user?.id}/notes`);
       const notesQuery = query(notesCollection, orderBy("updatedAt", "desc"));
       const querySnapshot = await getDocs(notesQuery);
@@ -82,16 +81,17 @@ export default function NotesSection() {
         id: doc.id,
         ...(doc.data() as Omit<Note, "id">),
       }));
-      setNotes(notesData); // Set notes to state
+      setNotes(notesData);
     } catch (error) {
       console.error("Error fetching notes:", error);
     } finally {
-      setIsLoading(false); // End loading
+      setIsLoading(false);
     }
   };
 
   const addNote = async () => {
     if (title.trim() === "" || description.trim() === "") return;
+    setIsAddingNote(true);
     const newNote: Note = {
       id: uuidv4(),
       title,
@@ -102,7 +102,6 @@ export default function NotesSection() {
     };
 
     try {
-      // Add the note to `users/{userId}/notes` sub-collection
       const noteDocRef = doc(db, `users/${user?.id}/notes`, newNote.id);
       await setDoc(noteDocRef, newNote);
       setNotes([newNote, ...notes]);
@@ -111,11 +110,14 @@ export default function NotesSection() {
       setSelectedCategory(categoryOptions[0].value);
     } catch (error) {
       console.error("Error adding note:", error);
+    } finally {
+      setIsAddingNote(false);
     }
   };
 
   const updateNote = async () => {
     if (editingId) {
+      setIsAddingNote(true);
       const updatedNotes = notes.map((note) =>
         note.id === editingId
           ? {
@@ -129,7 +131,6 @@ export default function NotesSection() {
       );
 
       try {
-        // Update the note in `users/{userId}/notes` sub-collection
         const noteDocRef = doc(db, `users/${user?.id}/notes`, editingId);
         await updateDoc(noteDocRef, {
           title,
@@ -144,6 +145,8 @@ export default function NotesSection() {
         setEditingId(null);
       } catch (error) {
         console.error("Error updating note:", error);
+      } finally {
+        setIsAddingNote(false);
       }
     }
   };
@@ -156,7 +159,6 @@ export default function NotesSection() {
   const deleteNote = async () => {
     if (noteToDelete) {
       try {
-        // Delete the note from `users/{userId}/notes` sub-collection
         await deleteDoc(doc(db, `users/${user?.id}/notes`, noteToDelete));
         const deletedNote = notes.find((note) => note.id === noteToDelete);
         if (deletedNote) {
@@ -175,7 +177,6 @@ export default function NotesSection() {
     if (deletedNotes.length > 0) {
       const [restoredNote, ...remainingDeleted] = deletedNotes;
       try {
-        // Restore the deleted note back to `users/{userId}/notes` sub-collection
         const noteDocRef = doc(db, `users/${user?.id}/notes`, restoredNote.id);
         await setDoc(noteDocRef, restoredNote);
         setNotes([restoredNote, ...notes]);
@@ -198,10 +199,17 @@ export default function NotesSection() {
       return b[sortBy] - a[sortBy];
     });
 
+  const getCategoryIcon = (category: string) => {
+    const categoryOption = categoryOptions.find(
+      (option) => option.value === category
+    );
+    return categoryOption ? categoryOption.icon : Calendar;
+  };
+
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <div className="container mx-auto p-4 max-w-6xl">
+      <div className="flex-grow container mx-auto p-4 max-w-6xl">
         <h1 className="text-3xl font-bold mb-6">Notes Section</h1>
 
         <div className="mb-6 bg-white p-4 rounded-lg shadow">
@@ -235,9 +243,17 @@ export default function NotesSection() {
           </div>
           <button
             onClick={editingId ? updateNote : addNote}
-            className="w-full p-2 bg-blue-500 text-white rounded"
+            disabled={isAddingNote}
+            className="w-full p-2 bg-blue-500 text-white rounded disabled:opacity-50"
           >
-            {editingId ? "Update Note" : "Add Note"}
+            {isAddingNote ? (
+              <>
+                <Loader2 className="inline-block mr-2 h-4 w-4 animate-spin" />
+                {editingId ? "Updating Note..." : "Adding Note..."}
+              </>
+            ) : (
+              <>{editingId ? "Update Note" : "Add Note"}</>
+            )}
           </button>
         </div>
 
@@ -249,8 +265,7 @@ export default function NotesSection() {
           className="w-full mb-6 p-2 border rounded"
         />
 
-        <div className="mb-6">
-          <label className="mr-2">Sort by:</label>
+        <div className="mb-6 flex items-center space-x-4">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
@@ -260,54 +275,77 @@ export default function NotesSection() {
             <option value="createdAt">Date Created</option>
             <option value="title">Title</option>
           </select>
+          <select
+            value={filterCategory || "all"}
+            onChange={(e) =>
+              setFilterCategory(
+                e.target.value === "all" ? null : e.target.value
+              )
+            }
+            className="p-2 border rounded"
+          >
+            <option value="all">All Categories</option>
+            {categoryOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         {isLoading ? (
           <div className="flex justify-center items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
           </div>
         ) : filteredNotes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4  ">
-            {filteredNotes.map((note) => (
-              <motion.div
-                key={note.id}
-                className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-              >
-                <h2 className="font-bold text-lg">{note.title}</h2>
-                <p>{note.description}</p>
-                <p className="text-gray-500 text-sm">
-                  Created: {format(new Date(note.createdAt), "MMM dd, yyyy")}
-                </p>
-                <p className="text-gray-500 text-sm">
-                  Updated: {format(new Date(note.updatedAt), "MMM dd, yyyy")}
-                </p>
-                <div className="flex justify-between mt-4">
-                  <button
-                    onClick={() => {
-                      setEditingId(note.id);
-                      setTitle(note.title);
-                      setDescription(note.description);
-                      setSelectedCategory(note.category);
-                    }}
-                    className="text-blue-500"
-                  >
-                    <PencilIcon className="inline mr-1" /> Edit
-                  </button>
-                  <button
-                    onClick={() => confirmDeleteNote(note.id)}
-                    className="text-red-500"
-                  >
-                    <TrashIcon className="inline mr-1" /> Delete
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <AnimatePresence>
+              {filteredNotes.map((note) => (
+                <motion.div
+                  key={note.id}
+                  className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="font-bold text-lg">{note.title}</h2>
+                    {React.createElement(getCategoryIcon(note.category), {
+                      className: "h-5 w-5 text-gray-500",
+                    })}
+                  </div>
+                  <p>{note.description}</p>
+                  <p className="text-gray-500 text-sm">
+                    Created: {format(new Date(note.createdAt), "MMM dd, yyyy")}
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    Updated: {formatDistanceToNow(new Date(note.updatedAt))} ago
+                  </p>
+                  <div className="flex justify-between mt-4">
+                    <button
+                      onClick={() => {
+                        setEditingId(note.id);
+                        setTitle(note.title);
+                        setDescription(note.description);
+                        setSelectedCategory(note.category);
+                      }}
+                      className="text-blue-500"
+                    >
+                      <Pencil className="inline mr-1" /> Edit
+                    </button>
+                    <button
+                      onClick={() => confirmDeleteNote(note.id)}
+                      className="text-red-500"
+                    >
+                      <Trash2 className="inline mr-1" /> Delete
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         ) : (
-          <div>No notes found.</div>
+          <div className="text-center text-gray-500">No notes found.</div>
         )}
 
         <AnimatePresence>
@@ -354,13 +392,13 @@ export default function NotesSection() {
                 onClick={undoDelete}
                 className="bg-blue-500 text-white p-2 rounded"
               >
-                <UndoIcon className="inline mr-1" /> Undo
+                <Undo2 className="inline mr-1" /> Undo
               </button>
             </div>
           </div>
         )}
       </div>
       <Footer />
-    </>
+    </div>
   );
 }

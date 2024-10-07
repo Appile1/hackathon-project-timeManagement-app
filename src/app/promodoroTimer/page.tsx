@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Play, Pause, RotateCcw, Settings, StopCircle } from "lucide-react";
-import "./pomodoro.css";
+import React, { useState, useEffect, useRef } from "react";
+import { Play, Pause, RotateCcw, Settings } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import useSound from "use-sound";
-import Header from "../../componets/header/header.js";
-import Footer from "../../componets/footer/footer.js";
+import { db } from "../firebase";
+import Header from "@/componets/header/header";
+import Footer from "@/componets/footer/footer";
+
 const TIMER_MODES = {
   POMODORO: "pomodoro",
   SHORT_BREAK: "shortBreak",
@@ -25,7 +28,8 @@ const MOODS = {
   BLOCKED: "blocked",
 };
 
-const PomodoroTimer = () => {
+export default function PomodoroTimer() {
+  const { user } = useUser();
   const [mode, setMode] = useState(TIMER_MODES.POMODORO);
   const [timers, setTimers] = useState({
     [TIMER_MODES.POMODORO]: 25 * 60,
@@ -43,6 +47,8 @@ const PomodoroTimer = () => {
   const [showDurationSettings, setShowDurationSettings] = useState(false);
   const [moodAction, setMoodAction] = useState("");
   const [backgroundColor, setBackgroundColor] = useState("#ef4444");
+  const [timeStudied, setTimeStudied] = useState(0);
+  const timeStudiedRef = useRef(0);
 
   const [playSound] = useSound("/audio.mp3");
   const [playFocusedSound, { stop: stopFocusedSound }] =
@@ -66,9 +72,9 @@ const PomodoroTimer = () => {
     useSound("/Creative.mp3");
 
   const stopAllSounds = () => {
-    // Stop all sounds
     stopFocusedSound();
     stopEnergeticSound();
+    stopDistractedSound();
     stopBlockedSound();
     stopTiredSound();
     stopStressedSound();
@@ -76,8 +82,30 @@ const PomodoroTimer = () => {
     stopMotivatedSound();
     stopUnmotivatedSound();
     stopCreativeSound();
-    stopDistractedSound();
   };
+
+  useEffect(() => {
+    if (user) {
+      const fetchUserData = async () => {
+        const userRef = doc(db, "users", user.id);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setTimeStudied(userData.timeStudied || 0);
+          timeStudiedRef.current = userData.timeStudied || 0;
+        } else {
+          await setDoc(userRef, {
+            name: user.fullName,
+            photoUrl: user.imageUrl,
+            timeStudied: 0,
+          });
+        }
+      };
+
+      fetchUserData();
+    }
+  }, [user]);
 
   useEffect(() => {
     let interval = null;
@@ -87,10 +115,21 @@ const PomodoroTimer = () => {
           ...prevTimers,
           [mode]: prevTimers[mode] - 1,
         }));
+
+        if (mode === TIMER_MODES.POMODORO) {
+          setTimeStudied((prevTime) => {
+            const newTime = prevTime + 1;
+            timeStudiedRef.current = newTime;
+            return newTime;
+          });
+        }
       }, 1000);
     } else if (timers[mode] === 0) {
       setIsActive(false);
       playSound();
+      if (mode === TIMER_MODES.POMODORO) {
+        updateTimeStudied(timeStudiedRef.current);
+      }
     }
     return () => clearInterval(interval);
   }, [isActive, mode, timers, playSound]);
@@ -124,7 +163,43 @@ const PomodoroTimer = () => {
     }
   }, []);
 
-  const toggleTimer = () => {
+  const updateTimeStudied = async (newTime) => {
+    if (user) {
+      const userRef = doc(db, "users", user.id);
+      await updateDoc(userRef, {
+        timeStudied: newTime,
+      });
+    }
+  };
+
+  const toggleTimer = async () => {
+    if (isActive) {
+      // Timer is being paused
+      if (mode === TIMER_MODES.POMODORO) {
+        await updateTimeStudied(timeStudiedRef.current);
+      }
+    }
+
+    if (user) {
+      const userRef = doc(db, "users", user.id);
+      const userSnap = await getDoc(userRef);
+      const userData = userSnap.data();
+
+      const updates = {};
+      if (userData.name !== user.fullName) {
+        updates.name = user.fullName;
+      }
+      if (userData.photoUrl !== user.imageUrl) {
+        updates.photoUrl = user.imageUrl;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        await updateDoc(userRef, {
+          ...updates,
+          lastActive: new Date().toISOString(),
+        });
+      }
+    }
     setIsActive((prev) => !prev);
   };
 
@@ -134,10 +209,16 @@ const PomodoroTimer = () => {
       ...prevTimers,
       [mode]: durations[mode] * 60,
     }));
+    if (mode === TIMER_MODES.POMODORO) {
+      updateTimeStudied(timeStudiedRef.current);
+    }
   };
 
   const switchMode = (newMode) => {
     if (mode !== newMode) {
+      if (mode === TIMER_MODES.POMODORO && isActive) {
+        updateTimeStudied(timeStudiedRef.current);
+      }
       setMode(newMode);
       setIsActive(false);
       setTimers((prevTimers) => ({
@@ -157,28 +238,25 @@ const PomodoroTimer = () => {
 
   const handleDurationChange = (e, timerKey) => {
     const value = parseInt(e.target.value);
-    if (!isNaN(value) && value > 0) {
-      setDurations((prevDurations) => ({
-        ...prevDurations,
-        [timerKey]: value,
-      }));
-      setTimers((prevTimers) => ({
-        ...prevTimers,
-        [timerKey]: value * 60,
-      }));
-    }
+    setDurations((prevDurations) => ({
+      ...prevDurations,
+      [timerKey]: value,
+    }));
+    setTimers((prevTimers) => ({
+      ...prevTimers,
+      [timerKey]: value * 60,
+    }));
   };
 
   const handleMoodSubmit = (newMood) => {
     setMood(newMood);
     setShowMoodInput(false);
     handleMood(newMood);
-    playAudio(newMood); // Play sound when mood is selected
+    playAudio(newMood);
   };
 
   const playAudio = (currentMood) => {
-    console.log(currentMood);
-    stopAllSounds(); // Stop all sounds before playing a new one
+    stopAllSounds();
     switch (currentMood) {
       case MOODS.FOCUSED:
         playFocusedSound();
@@ -256,77 +334,120 @@ const PomodoroTimer = () => {
   return (
     <>
       <Header />
-      <div className="pomodoro-container" style={{ backgroundColor }}>
-        <div className="timer-display">{formatTime(timers[mode])}</div>
-        <div className="button-container">
-          {Object.values(TIMER_MODES).map((timerMode) => (
-            <button
-              key={timerMode}
-              onClick={() => switchMode(timerMode)}
-              className={`timer-button ${mode === timerMode ? "active" : ""}`}
-            >
-              {timerMode.replace(/_/g, " ").toUpperCase()}
-            </button>
-          ))}
-        </div>
-        <div className="button-container">
-          <button onClick={toggleTimer} className="control-button">
-            {isActive ? <Pause size={24} /> : <Play size={24} />}
-          </button>
-          <button onClick={resetTimer} className="control-button">
-            <RotateCcw size={24} />
-          </button>
-          <button onClick={stopAllSounds} className="control-button">
-            <StopCircle size={24} />
-            Stop Music
-          </button>
-        </div>
-        <button
-          onClick={() => setShowDurationSettings((prev) => !prev)}
-          className="settings-button"
-        >
-          <Settings size={24} className="mr-2" />
-          Set Durations
-        </button>
-        {showDurationSettings && (
-          <div className="duration-settings">
-            {Object.entries(durations).map(([key, value]) => (
-              <label key={key}>
-                {key.replace(/_/g, " ").toUpperCase()} Duration:
-                <input
-                  type="number"
-                  value={value}
-                  onChange={(e) => handleDurationChange(e, key)}
-                />
-              </label>
+      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+          <h1 className="text-2xl font-bold text-center mb-6">
+            Pomodoro Timer
+          </h1>
+          <div
+            className="text-6xl font-bold text-center mb-8"
+            style={{ color: backgroundColor }}
+          >
+            {formatTime(timers[mode])}
+          </div>
+          <div className="grid grid-cols-3 gap-2 mb-6">
+            {Object.values(TIMER_MODES).map((timerMode) => (
+              <button
+                key={timerMode}
+                onClick={() => switchMode(timerMode)}
+                className={`py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                  mode === timerMode
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
+              >
+                {timerMode.replace(/_/g, " ").toUpperCase()}
+              </button>
             ))}
           </div>
-        )}
-        <div className="mood-selection">
+          <div className="flex justify-center space-x-4 mb-6">
+            <button
+              onClick={toggleTimer}
+              className="flex items-center justify-center py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              {isActive ? (
+                <>
+                  <Pause className="mr-2 h-4 w-4" />
+                  Pause
+                </>
+              ) : (
+                <>
+                  <Play className="mr-2 h-4 w-4" />
+                  Start
+                </>
+              )}
+            </button>
+            <button
+              onClick={resetTimer}
+              className="flex items-center justify-center py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Reset
+            </button>
+          </div>
+          <button
+            onClick={() => setShowDurationSettings((prev) => !prev)}
+            className="w-full mb-4 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors flex items-center justify-center"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Set Durations
+          </button>
+          {showDurationSettings && (
+            <div className="space-y-4 mb-6">
+              {Object.entries(durations).map(([key, value]) => (
+                <div key={key}>
+                  <label
+                    htmlFor={key}
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {key.replace(/_/g, " ").toUpperCase()} Duration (minutes)
+                  </label>
+                  <input
+                    type="range"
+                    id={key}
+                    min="1"
+                    max="60"
+                    value={value}
+                    onChange={(e) => handleDurationChange(e, key)}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="text-right text-sm text-gray-500 mt-1">
+                    {value} minutes
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           <button
             onClick={() => setShowMoodInput((prev) => !prev)}
-            className="mood-button"
+            className="w-full mb-4 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
           >
             Select Mood
           </button>
           {showMoodInput && (
-            <div className="mood-input">
+            <div className="grid grid-cols-2 gap-2 mb-4">
               {Object.values(MOODS).map((moodOption) => (
                 <button
                   key={moodOption}
                   onClick={() => handleMoodSubmit(moodOption)}
-                  className="mood-option"
+                  className="py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm"
                 >
                   {moodOption}
                 </button>
               ))}
             </div>
           )}
-          {mood && <div className="mood-action">{moodAction}</div>}
+          {mood && (
+            <div className="text-sm text-center mb-4 text-gray-600">
+              {moodAction}
+            </div>
+          )}
+          <div className="text-center text-sm text-gray-500">
+            Total Time Studied: {formatTime(timeStudied)}
+          </div>
         </div>
       </div>
+      <Footer />
     </>
   );
-};
-
-export default PomodoroTimer;
+}
