@@ -6,8 +6,8 @@ import { useUser } from "@clerk/nextjs";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import useSound from "use-sound";
 import { db } from "../firebase";
-import Header from "@/componets/header/header";
-import Footer from "@/componets/footer/footer";
+import Header from "../../componets/header/header";
+import Footer from "../../componets/footer/footer";
 
 const TIMER_MODES = {
   POMODORO: "pomodoro",
@@ -50,26 +50,46 @@ export default function PomodoroTimer() {
   const [timeStudied, setTimeStudied] = useState(0);
   const timeStudiedRef = useRef(0);
 
-  const [playSound] = useSound("/audio.mp3");
-  const [playFocusedSound, { stop: stopFocusedSound }] =
-    useSound("/Focused.mp3");
-  const [playEnergeticSound, { stop: stopEnergeticSound }] =
-    useSound("/Energetic.mp3");
-  const [playDistractedSound, { stop: stopDistractedSound }] =
-    useSound("/Distracted.mp3");
-  const [playBlockedSound, { stop: stopBlockedSound }] =
-    useSound("/Distracted.mp3");
-  const [playTiredSound, { stop: stopTiredSound }] = useSound("/Tired.mp3");
-  const [playStressedSound, { stop: stopStressedSound }] =
-    useSound("/Stressed.mp3");
-  const [playRelaxedSound, { stop: stopRelaxedSound }] =
-    useSound("/Relaxed.mp3");
-  const [playMotivatedSound, { stop: stopMotivatedSound }] =
-    useSound("/Motivated.mp3");
-  const [playUnmotivatedSound, { stop: stopUnmotivatedSound }] =
-    useSound("/Unmotivated.mp3");
-  const [playCreativeSound, { stop: stopCreativeSound }] =
-    useSound("/Creative.mp3");
+  const [playSound] = useSound("/audio.mp3", { volume: 0.5 });
+  const [playFocusedSound, { stop: stopFocusedSound }] = useSound(
+    "/Focused.mp3",
+    { volume: 0.5 }
+  );
+  const [playEnergeticSound, { stop: stopEnergeticSound }] = useSound(
+    "/Energetic.mp3",
+    { volume: 0.5 }
+  );
+  const [playDistractedSound, { stop: stopDistractedSound }] = useSound(
+    "/Distracted.mp3",
+    { volume: 0.5 }
+  );
+  const [playBlockedSound, { stop: stopBlockedSound }] = useSound(
+    "/Blocked.mp3",
+    { volume: 0.5 }
+  );
+  const [playTiredSound, { stop: stopTiredSound }] = useSound("/Tired.mp3", {
+    volume: 0.5,
+  });
+  const [playStressedSound, { stop: stopStressedSound }] = useSound(
+    "/Stressed.mp3",
+    { volume: 0.5 }
+  );
+  const [playRelaxedSound, { stop: stopRelaxedSound }] = useSound(
+    "/Relaxed.mp3",
+    { volume: 0.5 }
+  );
+  const [playMotivatedSound, { stop: stopMotivatedSound }] = useSound(
+    "/Motivated.mp3",
+    { volume: 0.5 }
+  );
+  const [playUnmotivatedSound, { stop: stopUnmotivatedSound }] = useSound(
+    "/Unmotivated.mp3",
+    { volume: 0.5 }
+  );
+  const [playCreativeSound, { stop: stopCreativeSound }] = useSound(
+    "/Creative.mp3",
+    { volume: 0.5 }
+  );
 
   const stopAllSounds = () => {
     stopFocusedSound();
@@ -87,19 +107,23 @@ export default function PomodoroTimer() {
   useEffect(() => {
     if (user) {
       const fetchUserData = async () => {
-        const userRef = doc(db, "users", user.id);
-        const userSnap = await getDoc(userRef);
+        try {
+          const userRef = doc(db, "users", user.id);
+          const userSnap = await getDoc(userRef);
 
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          setTimeStudied(userData.timeStudied || 0);
-          timeStudiedRef.current = userData.timeStudied || 0;
-        } else {
-          await setDoc(userRef, {
-            name: user.fullName,
-            photoUrl: user.imageUrl,
-            timeStudied: 0,
-          });
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            setTimeStudied(userData.timeStudied || 0);
+            timeStudiedRef.current = userData.timeStudied || 0;
+          } else {
+            await setDoc(userRef, {
+              name: user.fullName,
+              photoUrl: user.imageUrl,
+              timeStudied: 0,
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
         }
       };
 
@@ -108,7 +132,7 @@ export default function PomodoroTimer() {
   }, [user]);
 
   useEffect(() => {
-    let interval = null;
+    let interval: NodeJS.Timeout | null = null;
     if (isActive && timers[mode] > 0) {
       interval = setInterval(() => {
         setTimers((prevTimers) => ({
@@ -131,7 +155,9 @@ export default function PomodoroTimer() {
         updateTimeStudied(timeStudiedRef.current);
       }
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isActive, mode, timers, playSound]);
 
   useEffect(() => {
@@ -148,56 +174,65 @@ export default function PomodoroTimer() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedMode = localStorage.getItem("mode");
-      const savedTimers = JSON.parse(localStorage.getItem("timers"));
+      const savedTimers = JSON.parse(localStorage.getItem("timers") || "{}");
       const savedIsActive = localStorage.getItem("isActive") === "true";
-      const savedDurations = JSON.parse(localStorage.getItem("durations"));
+      const savedDurations = JSON.parse(
+        localStorage.getItem("durations") || "{}"
+      );
       const savedMood = localStorage.getItem("mood");
       const savedBackgroundColor = localStorage.getItem("backgroundColor");
 
-      if (savedMode) setMode(savedMode);
-      if (savedTimers) setTimers(savedTimers);
+      if (savedMode) setMode(savedMode as keyof typeof TIMER_MODES);
+      if (Object.keys(savedTimers).length) setTimers(savedTimers);
       if (savedIsActive) setIsActive(savedIsActive);
-      if (savedDurations) setDurations(savedDurations);
+      if (Object.keys(savedDurations).length) setDurations(savedDurations);
       if (savedMood) setMood(savedMood);
       if (savedBackgroundColor) setBackgroundColor(savedBackgroundColor);
     }
   }, []);
 
-  const updateTimeStudied = async (newTime) => {
+  const updateTimeStudied = async (newTime: number) => {
     if (user) {
-      const userRef = doc(db, "users", user.id);
-      await updateDoc(userRef, {
-        timeStudied: newTime,
-      });
+      try {
+        const userRef = doc(db, "users", user.id);
+        await updateDoc(userRef, {
+          timeStudied: newTime,
+        });
+      } catch (error) {
+        console.error("Error updating time studied:", error);
+      }
     }
   };
 
   const toggleTimer = async () => {
     if (isActive) {
-      // Timer is being paused
       if (mode === TIMER_MODES.POMODORO) {
         await updateTimeStudied(timeStudiedRef.current);
       }
     }
 
     if (user) {
-      const userRef = doc(db, "users", user.id);
-      const userSnap = await getDoc(userRef);
-      const userData = userSnap.data();
+      try {
+        const userRef = doc(db, "users", user.id);
+        const userSnap = await getDoc(userRef);
+        const userData = userSnap.data();
 
-      const updates = {};
-      if (userData.name !== user.fullName) {
-        updates.name = user.fullName;
-      }
-      if (userData.photoUrl !== user.imageUrl) {
-        updates.photoUrl = user.imageUrl;
-      }
+        const updates: { [key: string]: any } = {};
+        if (userData?.name !== user.fullName) {
+          updates.name = user.fullName;
+        }
+        if (userData?.photoUrl !== user.imageUrl) {
+          updates.photoUrl = user.imageUrl;
+        }
 
-      if (Object.keys(updates).length > 0) {
-        await updateDoc(userRef, {
-          ...updates,
-          lastActive: new Date().toISOString(),
-        });
+        if (Object.keys(updates).length > 0) {
+          await updateDoc(userRef, {
+            ...updates,
+            lastActive: new Date().toISOString(),
+          });
+        }
+      } catch (error) {
+        console.error("Error updating user data:", error);
       }
     }
     setIsActive((prev) => !prev);
@@ -214,7 +249,7 @@ export default function PomodoroTimer() {
     }
   };
 
-  const switchMode = (newMode) => {
+  const switchMode = (newMode: keyof typeof TIMER_MODES) => {
     if (mode !== newMode) {
       if (mode === TIMER_MODES.POMODORO && isActive) {
         updateTimeStudied(timeStudiedRef.current);
@@ -228,7 +263,7 @@ export default function PomodoroTimer() {
     }
   };
 
-  const formatTime = (seconds) => {
+  const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs
@@ -236,7 +271,10 @@ export default function PomodoroTimer() {
       .padStart(2, "0")}`;
   };
 
-  const handleDurationChange = (e, timerKey) => {
+  const handleDurationChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    timerKey: keyof typeof TIMER_MODES
+  ) => {
     const value = parseInt(e.target.value);
     setDurations((prevDurations) => ({
       ...prevDurations,
@@ -248,14 +286,14 @@ export default function PomodoroTimer() {
     }));
   };
 
-  const handleMoodSubmit = (newMood) => {
+  const handleMoodSubmit = (newMood: keyof typeof MOODS) => {
     setMood(newMood);
     setShowMoodInput(false);
     handleMood(newMood);
     playAudio(newMood);
   };
 
-  const playAudio = (currentMood) => {
+  const playAudio = (currentMood: keyof typeof MOODS) => {
     stopAllSounds();
     switch (currentMood) {
       case MOODS.FOCUSED:
@@ -293,7 +331,7 @@ export default function PomodoroTimer() {
     }
   };
 
-  const handleMood = (currentMood) => {
+  const handleMood = (currentMood: keyof typeof MOODS) => {
     let action = "";
     let newBackgroundColor = backgroundColor;
 
@@ -349,7 +387,9 @@ export default function PomodoroTimer() {
             {Object.values(TIMER_MODES).map((timerMode) => (
               <button
                 key={timerMode}
-                onClick={() => switchMode(timerMode)}
+                onClick={() =>
+                  switchMode(timerMode as keyof typeof TIMER_MODES)
+                }
                 className={`py-2 px-4 rounded-md text-sm font-medium transition-colors ${
                   mode === timerMode
                     ? "bg-blue-600 text-white"
@@ -408,7 +448,9 @@ export default function PomodoroTimer() {
                     min="1"
                     max="60"
                     value={value}
-                    onChange={(e) => handleDurationChange(e, key)}
+                    onChange={(e) =>
+                      handleDurationChange(e, key as keyof typeof TIMER_MODES)
+                    }
                     className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                   />
                   <div className="text-right text-sm text-gray-500 mt-1">
@@ -429,7 +471,9 @@ export default function PomodoroTimer() {
               {Object.values(MOODS).map((moodOption) => (
                 <button
                   key={moodOption}
-                  onClick={() => handleMoodSubmit(moodOption)}
+                  onClick={() =>
+                    handleMoodSubmit(moodOption as keyof typeof MOODS)
+                  }
                   className="py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm"
                 >
                   {moodOption}
