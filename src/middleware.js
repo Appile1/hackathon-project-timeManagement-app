@@ -6,7 +6,6 @@ const isPublicRoute = createRouteMatcher([
   "/signup",
   "/",
   "/generate",
-  "/promodoroTimer",
 ]);
 
 export default clerkMiddleware((auth, req) => {
