@@ -47,6 +47,7 @@ export default function PomodoroTimer() {
   const [showDurationSettings, setShowDurationSettings] = useState(false);
   const [moodAction, setMoodAction] = useState("");
   const [backgroundColor, setBackgroundColor] = useState("#ef4444");
+  const [bodyColor, setBodyColor] = useState("rgb(186, 73, 73)")
   const [timeStudied, setTimeStudied] = useState(0);
   const timeStudiedRef = useRef(0);
 
@@ -334,6 +335,7 @@ export default function PomodoroTimer() {
   const handleMood = (currentMood: keyof typeof MOODS) => {
     let action = "";
     let newBackgroundColor = backgroundColor;
+    let bodiesBackgroundColor = bodyColor;
 
     switch (currentMood) {
       case MOODS.FOCUSED:
@@ -345,6 +347,7 @@ export default function PomodoroTimer() {
           [TIMER_MODES.SHORT_BREAK]: 5,
         }));
         newBackgroundColor = "#e6f3ff";
+        bodiesBackgroundColor = "#ADD8FF"
         break;
       case MOODS.ENERGETIC:
         action =
@@ -355,11 +358,13 @@ export default function PomodoroTimer() {
           [TIMER_MODES.SHORT_BREAK]: 5,
         }));
         newBackgroundColor = "#e6ffe6";
+        bodiesBackgroundColor = "blue"
         break;
       case MOODS.BLOCKED:
         action =
           "Taking a break to clear your mind. Consider a quick walk or meditation.";
         newBackgroundColor = "#ffdddd";
+        bodiesBackgroundColor = "#FFECB3"; 
         break;
       default:
         action =
@@ -367,19 +372,23 @@ export default function PomodoroTimer() {
     }
     setMoodAction(action);
     setBackgroundColor(newBackgroundColor);
+    setBodyColor(bodiesBackgroundColor)
   };
 
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4"
+      style={{background: bodyColor}}
+      
+      >
         <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
           <h1 className="text-2xl font-bold text-center mb-6">
             Pomodoro Timer
           </h1>
           <div
             className="text-6xl font-bold text-center mb-8"
-            style={{ color: backgroundColor }}
+            style={{ color: backgroundColor,  }}
           >
             {formatTime(timers[mode])}
           </div>
