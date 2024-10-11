@@ -358,7 +358,7 @@ export default function PomodoroTimer() {
           [TIMER_MODES.SHORT_BREAK]: 5,
         }));
         newBackgroundColor = "#e6ffe6";
-        bodiesBackgroundColor = "blue"
+        bodiesBackgroundColor = "#f4976c "
         break;
       case MOODS.BLOCKED:
         action =
