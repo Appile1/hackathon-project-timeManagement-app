@@ -7,11 +7,9 @@ import Footer from "../../../componets/footer/footer.js";
 export default function Signin() {
   return (
     <>
-      <Header />
       <div className="sign-in-container">
         <SignIn />
       </div>
-      <Footer />
     </>
   );
 }
