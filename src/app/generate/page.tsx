@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { Loader } from "lucide-react";
-import Header from "../../componets/header/header.js";
-import Footer from "../../componets/footer/footer.js";
+import { db } from "../firebase"; // Firestore initialization (ensure you have Firebase configured)
+import { collection, doc, setDoc } from "firebase/firestore";
+import Header from "../../componets/header/header";
+import Footer from "../../componets/footer/footer";
 
 interface Flashcard {
   id: string;
@@ -21,6 +23,9 @@ export default function ChatArea() {
     {}
   );
   const { user } = useUser();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [collectionName, setCollectionName] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
@@ -39,7 +44,6 @@ export default function ChatArea() {
   Include examples or additional context if it helps clarify the concept.
   Avoid overly complex or ambiguous wording; aim for clarity and simplicity.
   Please generate the flashcards in the JSON array format with no additional text.`;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
@@ -86,6 +90,25 @@ export default function ChatArea() {
     setFlippedCards((prev) => ({ ...prev, [cardId]: !prev[cardId] }));
   };
 
+  const handleSaveFlashcards = async () => {
+    if (collectionName.trim() === "") return;
+    try {
+      const flashcardDocRef = doc(
+        collection(db, `users/${user?.id}/flashcards`),
+        collectionName
+      );
+      await setDoc(flashcardDocRef, {
+        flashcards,
+      });
+      setIsModalOpen(false);
+      setCollectionName("");
+      alert("Flashcards saved successfully!");
+    } catch (error) {
+      console.error("Error saving flashcards:", error);
+      setError("Failed to save flashcards. Please try again.");
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-100 to-purple-100">
       <Header />
@@ -128,7 +151,7 @@ export default function ChatArea() {
           {error && <p className="text-red-500 text-center mt-4">{error}</p>}
 
           {flashcards.length > 0 && (
-            <div className="mt-12  cursor-pointer">
+            <div className="mt-12 cursor-pointer">
               <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">
                 Generated Flashcards
               </h2>
@@ -158,11 +181,53 @@ export default function ChatArea() {
                   </div>
                 ))}
               </div>
+
+              {/* Save Flashcards Button */}
+              <div className="flex justify-center mt-8">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-all duration-300 ease-in-out transform hover:scale-105"
+                >
+                  Save Flashcards
+                </button>
+              </div>
             </div>
           )}
         </div>
       </main>
       <Footer />
+
+      {/* Modal for Flashcard Name */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 w-96">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              Save Flashcards
+            </h3>
+            <input
+              type="text"
+              value={collectionName}
+              onChange={(e) => setCollectionName(e.target.value)}
+              placeholder="Enter a collection name"
+              className="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveFlashcards}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
