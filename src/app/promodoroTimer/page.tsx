@@ -475,6 +475,8 @@ export default function PomodoroTimer() {
           >
             Select Mood
           </button>
+          {/* stop button added here */}
+          <button className="rounded-md hover:bg-gray-300 transition-colors">stop</button>
           {showMoodInput && (
             <div className="grid grid-cols-2 gap-2 mb-4">
               {Object.values(MOODS).map((moodOption) => (
