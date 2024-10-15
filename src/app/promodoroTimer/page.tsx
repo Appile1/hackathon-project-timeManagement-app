@@ -8,6 +8,7 @@ import useSound from "use-sound";
 import { db } from "../firebase";
 import Header from "../../componets/header/header";
 import Footer from "../../componets/footer/footer";
+import YoutubePlayer from "../../componets/youtuber/youtuber";
 
 const TIMER_MODES = {
   POMODORO: "pomodoro",
@@ -502,6 +503,7 @@ function stopMusic(){
           <div className="text-center text-sm text-gray-500">
             Total Time Studied: {formatTime(timeStudied)}
           </div>
+          <YoutubePlayer />
         </div>
       </div>
       <Footer />
