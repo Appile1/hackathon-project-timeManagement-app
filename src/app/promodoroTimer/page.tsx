@@ -9,7 +9,7 @@ import { db } from "../firebase";
 import Header from "../../componets/header/header";
 import Footer from "../../componets/footer/footer";
 import YoutubePlayer from "../../componets/youtuber/youtuber";
-
+import BackGroundChanger from  "../../componets/background changer/backgroundChange";
 const TIMER_MODES = {
   POMODORO: "pomodoro",
   SHORT_BREAK: "shortBreak",
@@ -51,6 +51,8 @@ export default function PomodoroTimer() {
   const [bodyColor, setBodyColor] = useState("rgb(186, 73, 73)")
   const [timeStudied, setTimeStudied] = useState(0);
   const timeStudiedRef = useRef(0);
+  const [background, setBackground] = useState("");
+
 
   const [playSound] = useSound("/audio.mp3", { volume: 0.5 });
   const [playFocusedSound, { stop: stopFocusedSound }] = useSound(
@@ -381,8 +383,13 @@ function stopMusic(){
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4"
-      style={{background: bodyColor}}
+      <div 
+        className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4"
+        style={{
+          background: background ? `url(${background})` : bodyColor,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
       
       >
         <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
@@ -500,6 +507,7 @@ function stopMusic(){
               {moodAction}
             </div>
           )}
+           <BackGroundChanger setBackground={setBackground} />
           <div className="text-center text-sm text-gray-500">
             Total Time Studied: {formatTime(timeStudied)}
           </div>
