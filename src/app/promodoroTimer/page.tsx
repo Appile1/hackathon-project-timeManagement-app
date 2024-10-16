@@ -384,11 +384,12 @@ function stopMusic(){
     <>
       <Header />
       <div 
-        className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4"
+        className=" bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4"
         style={{
           background: background ? `url(${background})` : bodyColor,
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
         }}
       
       >
