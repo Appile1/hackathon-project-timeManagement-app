@@ -44,7 +44,17 @@
     height: 100%;
     border-radius: 12px;
   }
+ 
+  input[type=file]::file-selector-button {
   
+border-radius: 20px;
+border: 1px solid black;
+color: black;
+background-color: white
+  
+  }
+  
+
   /* Responsive adjustments */
   @media (max-width: 640px) {
     .youtubePlayerContainer {
