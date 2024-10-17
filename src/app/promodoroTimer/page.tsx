@@ -381,19 +381,18 @@ function stopMusic(){
   };
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col mt-10">
       <Header />
       <div 
-        className=" bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4"
+        className="flex-grow bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4" 
         style={{
           background: background ? `url(${background})` : bodyColor,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
         }}
-      
       >
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 "> 
           <h1 className="text-2xl font-bold text-center mb-6">
             Pomodoro Timer
           </h1>
@@ -515,7 +514,7 @@ function stopMusic(){
           <YoutubePlayer />
         </div>
       </div>
-      <Footer />
-    </>
+      </div>
+   
   );
 }
