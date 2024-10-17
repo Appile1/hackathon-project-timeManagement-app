@@ -193,3 +193,6 @@ body {
   }
 }
 
+#modal{
+  border: 5px solid black;
+}
