@@ -380,19 +380,18 @@ function stopMusic(){
     setBodyColor(bodiesBackgroundColor)
   };
 
+
   return (
     <div className="min-h-screen flex flex-col mt-10">
       <Header />
-      <div 
-        className="flex-grow bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4" 
+      <div
+        className={`flex-grow flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat min-h-screen`}
         style={{
-          background: background ? `url(${background})` : bodyColor,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          backgroundColor: background ? 'transparent' : bodyColor,
+          backgroundImage: background ? `url(${background})` : "none", // Set background image
         }}
       >
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 "> 
+        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
           <h1 className="text-2xl font-bold text-center mb-6">
             Pomodoro Timer
           </h1>
