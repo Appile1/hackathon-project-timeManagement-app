@@ -7,7 +7,6 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import useSound from "use-sound";
 import { db } from "../firebase";
 import Header from "../../componets/header/header";
-import Footer from "../../componets/footer/footer";
 import YoutubePlayer from "../../componets/youtuber/youtuber";
 import BackGroundChanger from  "../../componets/background changer/backgroundChange";
 const TIMER_MODES = {
@@ -484,8 +483,7 @@ function stopMusic(){
           >
             Select Mood
           </button>
-          {/* stop button added here */}
-          <button className="rounded-md hover:bg-gray-300 transition-colors" onClick={stopMusic}>stop</button>
+      
           {showMoodInput && (
             <div className="grid grid-cols-2 gap-2 mb-4">
               {Object.values(MOODS).map((moodOption) => (
@@ -506,11 +504,13 @@ function stopMusic(){
               {moodAction}
             </div>
           )}
+          <div className="containerLinks">
            <BackGroundChanger setBackground={setBackground} />
+          <YoutubePlayer/>
+          </div>
           <div className="text-center text-sm text-gray-500">
             Total Time Studied: {formatTime(timeStudied)}
           </div>
-          <YoutubePlayer />
         </div>
       </div>
       </div>
