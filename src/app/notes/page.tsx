@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, formatDistanceToNow } from "date-fns";
 import { v4 as uuidv4 } from "uuid";
@@ -13,6 +13,7 @@ import {
   BookOpen,
   Calendar,
   Loader2,
+  X,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import {
@@ -28,14 +29,19 @@ import {
 import { db } from "../firebase.js";
 import Header from "@/componets/header/header.js";
 import Footer from "@/componets/footer/footer.js";
+import dynamic from "next/dynamic";
+
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.snow.css";
 
 interface Note {
   id: string;
   title: string;
-  description: string;
+  content: string;
   createdAt: number;
   updatedAt: number;
   category: string;
+  color: string;
 }
 
 const categoryOptions = [
@@ -45,11 +51,20 @@ const categoryOptions = [
   { value: "other", label: "Other", icon: Calendar },
 ];
 
+const colorOptions = [
+  { value: "bg-white", label: "White" },
+  { value: "bg-red-100", label: "Red" },
+  { value: "bg-yellow-100", label: "Yellow" },
+  { value: "bg-green-100", label: "Green" },
+  { value: "bg-blue-100", label: "Blue" },
+  { value: "bg-purple-100", label: "Purple" },
+];
+
 export default function NotesSection() {
   const { user } = useUser();
   const [notes, setNotes] = useState<Note[]>([]);
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddingNote, setIsAddingNote] = useState(false);
@@ -59,11 +74,13 @@ export default function NotesSection() {
   const [selectedCategory, setSelectedCategory] = useState(
     categoryOptions[0].value
   );
+  const [selectedColor, setSelectedColor] = useState(colorOptions[0].value);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [deletedNotes, setDeletedNotes] = useState<Note[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -90,24 +107,23 @@ export default function NotesSection() {
   };
 
   const addNote = async () => {
-    if (title.trim() === "" || description.trim() === "") return;
+    if (title.trim() === "" || content.trim() === "") return;
     setIsAddingNote(true);
     const newNote: Note = {
       id: uuidv4(),
       title,
-      description,
+      content,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       category: selectedCategory,
+      color: selectedColor,
     };
 
     try {
       const noteDocRef = doc(db, `users/${user?.id}/notes`, newNote.id);
       await setDoc(noteDocRef, newNote);
       setNotes([newNote, ...notes]);
-      setTitle("");
-      setDescription("");
-      setSelectedCategory(categoryOptions[0].value);
+      resetForm();
     } catch (error) {
       console.error("Error adding note:", error);
     } finally {
@@ -123,9 +139,10 @@ export default function NotesSection() {
           ? {
               ...note,
               title,
-              description,
+              content,
               updatedAt: Date.now(),
               category: selectedCategory,
+              color: selectedColor,
             }
           : note
       );
@@ -134,21 +151,28 @@ export default function NotesSection() {
         const noteDocRef = doc(db, `users/${user?.id}/notes`, editingId);
         await updateDoc(noteDocRef, {
           title,
-          description,
+          content,
           updatedAt: Date.now(),
           category: selectedCategory,
+          color: selectedColor,
         });
         setNotes(updatedNotes);
-        setTitle("");
-        setDescription("");
-        setSelectedCategory(categoryOptions[0].value);
-        setEditingId(null);
+        resetForm();
+        setIsEditDialogOpen(false);
       } catch (error) {
         console.error("Error updating note:", error);
       } finally {
         setIsAddingNote(false);
       }
     }
+  };
+
+  const resetForm = () => {
+    setTitle("");
+    setContent("");
+    setSelectedCategory(categoryOptions[0].value);
+    setSelectedColor(colorOptions[0].value);
+    setEditingId(null);
   };
 
   const confirmDeleteNote = (id: string) => {
@@ -192,7 +216,7 @@ export default function NotesSection() {
       (note) =>
         (filterCategory ? note.category === filterCategory : true) &&
         (note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          note.description.toLowerCase().includes(searchTerm.toLowerCase()))
+          note.content.toLowerCase().includes(searchTerm.toLowerCase()))
     )
     .sort((a, b) => {
       if (sortBy === "title") return a.title.localeCompare(b.title);
@@ -206,8 +230,35 @@ export default function NotesSection() {
     return categoryOption ? categoryOption.icon : Calendar;
   };
 
+  const quillModules = useMemo(
+    () => ({
+      toolbar: [
+        [{ header: [1, 2, 3, false] }],
+        ["bold", "italic", "underline", "strike"],
+        [{ list: "ordered" }, { list: "bullet" }],
+        [{ align: [] }],
+        ["link", "image"],
+        ["clean"],
+      ],
+    }),
+    []
+  );
+
+  const quillFormats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "list",
+    "bullet",
+    "align",
+    "link",
+    "image",
+  ];
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-100">
       <Header />
       <div className="flex-grow container mx-auto p-4 max-w-6xl">
         <h1 className="text-3xl font-bold mb-6">Notes Section</h1>
@@ -220,21 +271,33 @@ export default function NotesSection() {
             onChange={(e) => setTitle(e.target.value)}
             className="w-full mb-2 p-2 border rounded"
           />
-          <textarea
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full mb-2 p-2 border rounded"
-            rows={3}
+          <ReactQuill
+            value={content}
+            onChange={setContent}
+            modules={quillModules}
+            formats={quillFormats}
+            className="mb-2"
           />
-          <div className="flex items-center space-x-2 mb-2">
+          <div className="flex flex-wrap items-center space-x-2 mb-2">
             <label className="mr-2">Category:</label>
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-[180px] p-2 border rounded"
+              className="p-2 border rounded"
             >
               {categoryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <label className="mr-2 ml-4">Color:</label>
+            <select
+              value={selectedColor}
+              onChange={(e) => setSelectedColor(e.target.value)}
+              className="p-2 border rounded"
+            >
+              {colorOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -244,7 +307,7 @@ export default function NotesSection() {
           <button
             onClick={editingId ? updateNote : addNote}
             disabled={isAddingNote}
-            className="w-full p-2 bg-blue-500 text-white rounded disabled:opacity-50"
+            className="w-full p-2 bg-blue-500 text-white rounded disabled:opacity-50 hover:bg-blue-600 transition-colors"
           >
             {isAddingNote ? (
               <>
@@ -257,19 +320,18 @@ export default function NotesSection() {
           </button>
         </div>
 
-        <input
-          type="text"
-          placeholder="Search notes..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full mb-6 p-2 border rounded"
-        />
-
-        <div className="mb-6 flex items-center space-x-4">
+        <div className="mb-6 flex flex-wrap items-center space-x-4">
+          <input
+            type="text"
+            placeholder="Search notes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-grow mb-2 p-2 border rounded"
+          />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="p-2 border rounded"
+            className="mb-2 p-2 border rounded"
           >
             <option value="updatedAt">Last Updated</option>
             <option value="createdAt">Date Created</option>
@@ -282,7 +344,7 @@ export default function NotesSection() {
                 e.target.value === "all" ? null : e.target.value
               )
             }
-            className="p-2 border rounded"
+            className="mb-2 p-2 border rounded"
           >
             <option value="all">All Categories</option>
             {categoryOptions.map((option) => (
@@ -303,18 +365,23 @@ export default function NotesSection() {
               {filteredNotes.map((note) => (
                 <motion.div
                   key={note.id}
-                  className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition"
+                  className={`p-4 rounded-lg shadow hover:shadow-lg transition ${note.color}`}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="font-bold text-lg">{note.title}</h2>
-                    {React.createElement(getCategoryIcon(note.category), {
-                      className: "h-5 w-5 text-gray-500",
-                    })}
+                    <div className="flex items-center space-x-2">
+                      {React.createElement(getCategoryIcon(note.category), {
+                        className: "h-5 w-5 text-gray-500",
+                      })}
+                    </div>
                   </div>
-                  <p>{note.description}</p>
+                  <div
+                    dangerouslySetInnerHTML={{ __html: note.content }}
+                    className="mb-2 prose max-w-none"
+                  />
                   <p className="text-gray-500 text-sm">
                     Created: {format(new Date(note.createdAt), "MMM dd, yyyy")}
                   </p>
@@ -326,18 +393,20 @@ export default function NotesSection() {
                       onClick={() => {
                         setEditingId(note.id);
                         setTitle(note.title);
-                        setDescription(note.description);
+                        setContent(note.content);
                         setSelectedCategory(note.category);
+                        setSelectedColor(note.color);
+                        setIsEditDialogOpen(true);
                       }}
-                      className="text-blue-500"
+                      className="text-blue-500 hover:text-blue-600 transition-colors"
                     >
-                      <Pencil className="inline mr-1" /> Edit
+                      <Pencil className="inline mr-1 h-4 w-4" /> Edit
                     </button>
                     <button
                       onClick={() => confirmDeleteNote(note.id)}
-                      className="text-red-500"
+                      className="text-red-500 hover:text-red-600 transition-colors"
                     >
-                      <Trash2 className="inline mr-1" /> Delete
+                      <Trash2 className="inline mr-1 h-4  w-4" /> Delete
                     </button>
                   </div>
                 </motion.div>
@@ -363,17 +432,94 @@ export default function NotesSection() {
                 <div className="flex justify-between">
                   <button
                     onClick={deleteNote}
-                    className="bg-red-500 text-white rounded p-2"
+                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
                   >
                     Yes, Delete
                   </button>
                   <button
                     onClick={() => setIsDeleteDialogOpen(false)}
-                    className="bg-gray-300 rounded p-2"
+                    className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400 transition-colors"
                   >
                     Cancel
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isEditDialogOpen && (
+            <motion.div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="bg-white p-6 rounded shadow w-full max-w-2xl">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-bold">Edit Note</h2>
+                  <button
+                    onClick={() => setIsEditDialogOpen(false)}
+                    className="text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full mb-2 p-2 border rounded"
+                  placeholder="Title"
+                />
+                <ReactQuill
+                  value={content}
+                  onChange={setContent}
+                  modules={quillModules}
+                  formats={quillFormats}
+                  className="mb-2"
+                />
+                <div className="flex flex-wrap items-center space-x-2 mb-2">
+                  <label className="mr-2">Category:</label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="p-2 border rounded"
+                  >
+                    {categoryOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  <label className="mr-2 ml-4">Color:</label>
+                  <select
+                    value={selectedColor}
+                    onChange={(e) => setSelectedColor(e.target.value)}
+                    className="p-2 border rounded"
+                  >
+                    {colorOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={updateNote}
+                  disabled={isAddingNote}
+                  className="w-full p-2 bg-blue-500 text-white rounded disabled:opacity-50 hover:bg-blue-600 transition-colors"
+                >
+                  {isAddingNote ? (
+                    <>
+                      <Loader2 className="inline-block mr-2 h-4 w-4 animate-spin" />
+                      Updating Note...
+                    </>
+                  ) : (
+                    "Update Note"
+                  )}
+                </button>
               </div>
             </motion.div>
           )}
@@ -390,9 +536,9 @@ export default function NotesSection() {
               ))}
               <button
                 onClick={undoDelete}
-                className="bg-blue-500 text-white p-2 rounded"
+                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
               >
-                <Undo2 className="inline mr-1" /> Undo
+                <Undo2 className="inline mr-1 h-4 w-4" /> Undo
               </button>
             </div>
           </div>
