@@ -65,28 +65,27 @@ const FlashcardDetail = ({ params }) => {
             </div>
           ) : flashcards.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {flashcards.map((card, index) => (
+              {flashcards.map((card) => (
                 <div
-                  key={index}
+                  key={card.id}
                   className="relative h-64 w-full perspective cursor-pointer"
-                  onClick={() => handleCardFlip(index)}
+                  onClick={() => handleCardFlip(card.id)}
                 >
                   <div
                     className={`absolute inset-0 w-full h-full transition-transform duration-500 ease-in-out preserve-3d ${
-                      flippedCards[index] ? "rotate-y-180" : ""
+                      flippedCards[card.id] ? "rotate-y-180" : ""
                     }`}
                   >
-                    {/* Front of the flashcard */}
-                    <div className="absolute inset-0 w-full h-full bg-white rounded-lg shadow-lg p-6 flex flex-col items-center justify-center backface-hidden">
-                      <p className="text-lg text-gray-800 font-bold text-center flex items-center justify-center h-full ">
+                    <div className="absolute inset-0 w-full h-full bg-white rounded-lg shadow-lg p-4 flex flex-col justify-center items-center backface-hidden">
+                      <h3 className="text-xl font-semibold text-gray-800 text-center mb-2">
                         {card.cardFront}
-                      </p>
+                      </h3>
+                      <div className="text-sm text-gray-600 text-center">
+                        Click to flip
+                      </div>
                     </div>
-                    {/* Back of the flashcard */}
-                    <div className="absolute inset-0 w-full h-full bg-gray-200 rounded-lg shadow-lg p-6 flex flex-col items-center justify-center backface-hidden rotate-y-180">
-                      <p className="text-lg text-gray-800 text-center flex items-center justify-center h-full  overflow-y-auto">
-                        {card.cardBack}
-                      </p>
+                    <div className="absolute inset-0 w-full h-full bg-blue-100 rounded-lg shadow-lg p-4 flex flex-col justify-center items-center backface-hidden rotate-y-180 overflow-y-auto">
+                      <p className="text-gray-700">{card.cardBack}</p>
                     </div>
                   </div>
                 </div>
