@@ -30,14 +30,14 @@ export default function Header() {
 
     // Prevent scrolling when the menu is open
     if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isMenuOpen]);
 
@@ -61,10 +61,8 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
-        isScrolled
-          ? "bg-white shadow-lg py-2"
-          : "bg-white py-4"
+      className={` top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out ${
+        isScrolled ? "bg-white shadow-lg py-2" : "bg-white py-4"
       }`}
     >
       <div className="container mx-auto px-4">
@@ -103,9 +101,7 @@ export default function Header() {
             </SignedIn>
             <SignedOut>
               <Link href="/signup">
-                <button
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                >
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
                   <LogIn className="inline-block mr-2" size={18} />
                   Sign In
                 </button>
