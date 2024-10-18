@@ -1,7 +1,13 @@
-import React from "react";
+import React, { ChangeEvent } from "react";
 
-const BackgroundChanger = ({ setBackground }) => {
-  const handleUrlChange = (event) => {
+interface BackgroundChangerProps {
+  setBackground: (url: string) => void;
+}
+
+const BackgroundChanger: React.FC<BackgroundChangerProps> = ({
+  setBackground,
+}) => {
+  const handleUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
     const url = event.target.value;
     if (url) {
       try {
@@ -13,8 +19,8 @@ const BackgroundChanger = ({ setBackground }) => {
     }
   };
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
       const fileUrl = URL.createObjectURL(file);
       setBackground(fileUrl);
