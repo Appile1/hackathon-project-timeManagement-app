@@ -17,7 +17,7 @@ const features = [
   {
     icon: "🧠",
     title: "Memory",
-    description: "Improve your memory with engaging exercises.",
+    description: "Save Your Previous Moments",
     link: "memory",
   },
   {
