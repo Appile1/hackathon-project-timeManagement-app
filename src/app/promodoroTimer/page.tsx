@@ -370,10 +370,17 @@ function stopMusic(){
         newBackgroundColor = "#ffdddd";
         bodiesBackgroundColor = "#FFECB3"; 
         break;
+        case MOODS.DISTRACTED:
+          action =
+            "Try to break up your tasks.";
+          newBackgroundColor = "#A3EBB1";
+          bodiesBackgroundColor = "#A3EBB1"; 
+          break;
       default:
         action =
           "Timer settings unchanged. Remember to adjust your environment for optimal productivity.";
     }
+    
     setMoodAction(action);
     setBackgroundColor(newBackgroundColor);
     setBodyColor(bodiesBackgroundColor)
