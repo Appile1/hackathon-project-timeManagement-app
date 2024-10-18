@@ -385,142 +385,193 @@ function stopMusic(){
     setBackgroundColor(newBackgroundColor);
     setBodyColor(bodiesBackgroundColor)
   };
+  
+  const [count, setCount] = useState(Number(localStorage.getItem("count")) || 0);
+  const [lastIncrementTime, setLastIncrementTime] = useState(Number(localStorage.getItem("lastIncrementTime")) || 0);
+  const [hideLoader, setHideLoader] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
 
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      const currentTime = Date.now();
+      const timeElapsed = currentTime - lastIncrementTime; // Time since last increment
+
+      // Check if 20 seconds (20000 milliseconds) have passed
+      if (timeElapsed >= 20000) {
+        const newCount = count + 1; // Increment count
+        localStorage.setItem("count", `${newCount}`); // Update localStorage count
+        localStorage.setItem("lastIncrementTime", currentTime); // Update last increment time
+
+        setCount(newCount); // Update state count
+        setShowLoader(true); // Show loader
+        setTimeout(() => {
+          setHideLoader(true); // Hide loader after 1 second
+        }, 1000);
+      }else{
+        setHideLoader(true)
+        setShowLoader(true)
+      }
+    }, 500); // Check every 500ms
+
+    return () => clearInterval(checkInterval); // Cleanup on unmount
+  }, [count, lastIncrementTime]); // Run effect
 
   return (
-    <div className="min-h-screen flex flex-col mt-10">
-      <Header />
+    <div className="min-h-screen">
       <div
-        className={`flex-grow flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat min-h-screen`}
-        style={{
-          backgroundColor: background ? 'transparent' : bodyColor,
-          backgroundImage: background ? `url(${background})` : "none", // Set background image
-        }}
+        className={`fixed inset-0 bg-white transition-opacity duration-500 ${hideLoader ? 'opacity-0 pointer-events-none' : 'opacity-100'} z-50`}
       >
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-          <h1 className="text-2xl font-bold text-center mb-6">
-            Pomodoro Timer
-          </h1>
-          <div
-            className="text-6xl font-bold text-center mb-8"
-            style={{ color: backgroundColor,  }}
-          >
-            {formatTime(timers[mode])}
-          </div>
-          <div className="grid grid-cols-3 gap-2 mb-6">
-            {Object.values(TIMER_MODES).map((timerMode) => (
-              <button
-                key={timerMode}
-                onClick={() =>
-                  switchMode(timerMode as keyof typeof TIMER_MODES)
-                }
-                className={`py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                  mode === timerMode
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-              >
-                {timerMode.replace(/_/g, " ").toUpperCase()}
-              </button>
-            ))}
-          </div>
-          <div className="flex justify-center space-x-4 mb-6">
-            <button
-              onClick={toggleTimer}
-              className="flex items-center justify-center py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              {isActive ? (
-                <>
-                  <Pause className="mr-2 h-4 w-4" />
-                  Pause
-                </>
-              ) : (
-                <>
-                  <Play className="mr-2 h-4 w-4" />
-                  Start
-                </>
-              )}
-            </button>
-            <button
-              onClick={resetTimer}
-              className="flex items-center justify-center py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Reset
-            </button>
-          </div>
-          <button
-            onClick={() => setShowDurationSettings((prev) => !prev)}
-            className="w-full mb-4 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors flex items-center justify-center"
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Set Durations
-          </button>
-          {showDurationSettings && (
-            <div className="space-y-4 mb-6">
-              {Object.entries(durations).map(([key, value]) => (
-                <div key={key}>
-                  <label
-                    htmlFor={key}
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    {key.replace(/_/g, " ").toUpperCase()} Duration (minutes)
-                  </label>
-                  <input
-                    type="range"
-                    id={key}
-                    min="1"
-                    max="60"
-                    value={value}
-                    onChange={(e) =>
-                      handleDurationChange(e, key as keyof typeof TIMER_MODES)
-                    }
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                  />
-                  <div className="text-right text-sm text-gray-500 mt-1">
-                    {value} minutes
-                  </div>
-                </div>
-              ))}
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-4">
+              <span className="text-6xl animate-bounce">🔥</span>
             </div>
-          )}
-          <button
-            onClick={() => setShowMoodInput((prev) => !prev)}
-            className="w-full mb-4 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
-          >
-            Select Mood
-          </button>
-      
-          {showMoodInput && (
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {Object.values(MOODS).map((moodOption) => (
-                <button
-                  key={moodOption}
-                  onClick={() =>
-                    handleMoodSubmit(moodOption as keyof typeof MOODS)
-                  }
-                  className="py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm"
-                >
-                  {moodOption}
-                </button>
-              ))}
+            <div className="text-4xl font-bold text-gray-800 animate-pulse">
+              {count} Day Streak!
             </div>
-          )}
-          {mood && (
-            <div className="text-sm text-center mb-4 text-gray-600">
-              {moodAction}
-            </div>
-          )}
-          <div className="containerLinks">
-           <BackGroundChanger setBackground={setBackground} />
-          <YoutubePlayer/>
-          </div>
-          <div className="text-center text-sm text-gray-500">
-            Total Time Studied: {formatTime(timeStudied)}
           </div>
         </div>
       </div>
+  
+      <div className={`transition-all duration-700 transform ${showLoader ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+        <div className="min-h-screen flex flex-col mt-10">
+          <Header />
+          <div
+            className="flex-grow flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat min-h-screen"
+            style={{
+              backgroundColor: background ? 'transparent' : bodyColor,
+              backgroundImage: background ? `url(${background})` : "none",
+            }}
+          >
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+            <h1 className="text-2xl font-bold text-center mb-6">Pomodoro Timer</h1>
+            <div
+              className="text-6xl font-bold text-center mb-8"
+              style={{ color: backgroundColor }}
+            >
+              {formatTime(timers[mode])}
+            </div>
+  
+            <div className="grid grid-cols-3 gap-2 mb-6">
+              {Object.values(TIMER_MODES).map((timerMode) => (
+                <button
+                  key={timerMode}
+                  onClick={() => switchMode(timerMode as keyof typeof TIMER_MODES)}
+                  className={`py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                    mode === timerMode
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  }`}
+                >
+                  {timerMode.replace(/_/g, " ").toUpperCase()}
+                </button>
+              ))}
+            </div>
+  
+            <div className="flex justify-center space-x-4 mb-6">
+              <button
+                onClick={toggleTimer}
+                className="flex items-center justify-center py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                {isActive ? (
+                  <>
+                    <Pause className="mr-2 h-4 w-4" />
+                    Pause
+                  </>
+                ) : (
+                  <>
+                    <Play className="mr-2 h-4 w-4" />
+                    Start
+                  </>
+                )}
+              </button>
+              <button
+                onClick={resetTimer}
+                className="flex items-center justify-center py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Reset
+              </button>
+            </div>
+  
+            <button
+              onClick={() => setShowDurationSettings((prev) => !prev)}
+              className="w-full mb-4 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors flex items-center justify-center"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Set Durations
+            </button>
+  
+            {showDurationSettings && (
+              <div className="space-y-4 mb-6">
+                {Object.entries(durations).map(([key, value]) => (
+                  <div key={key}>
+                    <label
+                      htmlFor={key}
+                      className="block text-sm font-medium text-gray-700 mb-1"
+                    >
+                      {key.replace(/_/g, " ").toUpperCase()} Duration (minutes)
+                    </label>
+                    <input
+                      type="range"
+                      id={key}
+                      min="1"
+                      max="60"
+                      value={value}
+                      onChange={(e) =>
+                        handleDurationChange(e, key as keyof typeof TIMER_MODES)
+                      }
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="text-right text-sm text-gray-500 mt-1">
+                      {value} minutes
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+  
+            <button
+              onClick={() => setShowMoodInput((prev) => !prev)}
+              className="w-full mb-4 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              Select Mood
+            </button>
+  
+            {showMoodInput && (
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {Object.values(MOODS).map((moodOption) => (
+                  <button
+                    key={moodOption}
+                    onClick={() =>
+                      handleMoodSubmit(moodOption as keyof typeof MOODS)
+                    }
+                    className="py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors text-sm"
+                  >
+                    {moodOption}
+                  </button>
+                ))}
+              </div>
+            )}
+  
+            {mood && (
+              <div className="text-sm text-center mb-4 text-gray-600">
+                {moodAction}
+              </div>
+            )}
+  
+            <div className="containerLinks">
+              <BackGroundChanger setBackground={setBackground} />
+              <YoutubePlayer />
+            </div>
+  
+            <div className="text-center text-sm text-gray-500">
+              Total Time Studied: {formatTime(timeStudied)}
+            </div>
+          </div>
+        </div>
       </div>
-   
+    </div>
+    </div>
   );
-}
+            }
