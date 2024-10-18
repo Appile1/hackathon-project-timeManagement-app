@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Readable } from "stream";
-import * as pdfParse from "pdf-parse";
+import pdfParse from "pdf-parse"; // Change this line
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -12,7 +11,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const buffer = await file.arrayBuffer();
-    const data = await pdfParse(Buffer.from(buffer));
+    const data = await pdfParse(Buffer.from(buffer)); // No change needed here
     return NextResponse.json({ text: data.text });
   } catch (error) {
     console.error("Error parsing PDF:", error);
