@@ -7,8 +7,8 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import useSound from "use-sound";
 import { db } from "../firebase";
 import Header from "../../componets/header/header";
-import Footer from "../../componets/footer/footer";
-
+import YoutubePlayer from "../../componets/youtuber/youtuber";
+import BackGroundChanger from  "../../componets/background changer/backgroundChange";
 const TIMER_MODES = {
   POMODORO: "pomodoro",
   SHORT_BREAK: "shortBreak",
@@ -50,6 +50,8 @@ export default function PomodoroTimer() {
   const [bodyColor, setBodyColor] = useState("rgb(186, 73, 73)")
   const [timeStudied, setTimeStudied] = useState(0);
   const timeStudiedRef = useRef(0);
+  const [background, setBackground] = useState("");
+
 
   const [playSound] = useSound("/audio.mp3", { volume: 0.5 });
   const [playFocusedSound, { stop: stopFocusedSound }] = useSound(
@@ -331,7 +333,9 @@ export default function PomodoroTimer() {
         break;
     }
   };
-
+function stopMusic(){
+  
+}
   const handleMood = (currentMood: keyof typeof MOODS) => {
     let action = "";
     let newBackgroundColor = backgroundColor;
@@ -375,12 +379,16 @@ export default function PomodoroTimer() {
     setBodyColor(bodiesBackgroundColor)
   };
 
+
   return (
-    <>
+    <div className="min-h-screen flex flex-col mt-10">
       <Header />
-      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex items-center justify-center p-4"
-      style={{background: bodyColor}}
-      
+      <div
+        className={`flex-grow flex items-center justify-center p-4 bg-cover bg-center bg-no-repeat min-h-screen`}
+        style={{
+          backgroundColor: background ? 'transparent' : bodyColor,
+          backgroundImage: background ? `url(${background})` : "none", // Set background image
+        }}
       >
         <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
           <h1 className="text-2xl font-bold text-center mb-6">
@@ -475,6 +483,7 @@ export default function PomodoroTimer() {
           >
             Select Mood
           </button>
+      
           {showMoodInput && (
             <div className="grid grid-cols-2 gap-2 mb-4">
               {Object.values(MOODS).map((moodOption) => (
@@ -495,12 +504,16 @@ export default function PomodoroTimer() {
               {moodAction}
             </div>
           )}
+          <div className="containerLinks">
+           <BackGroundChanger setBackground={setBackground} />
+          <YoutubePlayer/>
+          </div>
           <div className="text-center text-sm text-gray-500">
             Total Time Studied: {formatTime(timeStudied)}
           </div>
         </div>
       </div>
-      <Footer />
-    </>
+      </div>
+   
   );
 }
