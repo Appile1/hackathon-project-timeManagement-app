@@ -381,65 +381,93 @@ export default function PomodoroTimer() {
     setBackgroundColor(newBackgroundColor);
     setBodyColor(bodiesBackgroundColor);
   };
-
-  const [count, setCount] = useState(
-    Number(localStorage.getItem("count")) || 0
-  );
-  const [lastIncrementTime, setLastIncrementTime] = useState(
-    Number(localStorage.getItem("lastIncrementTime")) || 0
-  );
-  const [hideLoader, setHideLoader] = useState(false);
-  const [showLoader, setShowLoader] = useState(false);
+  
+  const [streak, setStreak] = useState<number | null>(null);
+  const [lastStreakUpdate, setLastStreakUpdate] = useState<number | null>(null);
+  const [displayStreak, setDisplayStreak] = useState<number>(0);
+  const [showStreakAnimation, setShowStreakAnimation] = useState(false);
+  const [hideLoader, setHideLoader] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
-    const checkInterval = setInterval(() => {
-      const currentTime = Date.now();
-      const timeElapsed = currentTime - lastIncrementTime; // Time since last increment
+    if (typeof window !== "undefined") {
+      const savedStreak = Number(localStorage.getItem("streak")) || 1;
+      setStreak(savedStreak);
+      setDisplayStreak(savedStreak);
+      setLastStreakUpdate(Number(localStorage.getItem("lastStreakUpdate")) || Date.now());
+      setHideLoader(false);
+    }
+  }, []);
 
-      // Check if 20 seconds (20000 milliseconds) have passed
-      if (timeElapsed >= 20000) {
-        const newCount = count + 1; // Increment count
-        localStorage.setItem("count", newCount.toString()); // Update localStorage count
-        localStorage.setItem("lastIncrementTime", currentTime.toString()); // Update last increment time
+  useEffect(() => {
+    if (streak === null || lastStreakUpdate === null || isAnimating) return;
 
-        setCount(newCount); // Update state count
-        setShowLoader(true); // Show loader
+    const checkStreak = setInterval(() => {
+      const now = Date.now();
+      const timeSinceLastUpdate = now - lastStreakUpdate;
+
+      if (timeSinceLastUpdate >= 20000 && !isAnimating) {
+        const newStreak = streak + 1;
+        setIsAnimating(true);
+        setShowStreakAnimation(true);
+        setHideLoader(false);
+
+        // Start at current streak and animate up
+        setDisplayStreak(streak);
+        
         setTimeout(() => {
-          setHideLoader(true); // Hide loader after 1 second
-        }, 1000);
+          setDisplayStreak(newStreak);
+          setStreak(newStreak);
+          setLastStreakUpdate(now);
+          
+          localStorage.setItem("streak", String(newStreak));
+          localStorage.setItem("lastStreakUpdate", String(now));
+          
+          setTimeout(() => {
+            setHideLoader(true);
+            setIsAnimating(false);
+          }, 900);
+        }, 1000); // Show current streak for 1 second before incrementing
+
       } else {
-        setHideLoader(true); // Ensure loader is hidden if not meeting the condition
-        setShowLoader(true); // Make sure the loader shows up
+        setHideLoader(true);
+        setShowStreakAnimation(true);
       }
-    }, 500); // Check every 500ms
+    }, 900);
 
-    return () => clearInterval(checkInterval); // Cleanup on unmount
-  }, [count, lastIncrementTime]); // Run effect
+    return () => clearInterval(checkStreak);
+  }, [streak, lastStreakUpdate, isAnimating]);
+  
 
+  // Modified streak display in render
+  const streakDisplay = streak === null ? (
+    <div className="hidden">Loading...</div>
+  ) : (
+    <div className="text-4xl font-bold text-black-800 ">
+      {streak} Day Streak!
+    </div>
+  );
+  // Modify your return statement to include the streak animation
   return (
     <div className="min-h-screen">
       <div
-        className={`fixed inset-0 bg-white transition-opacity duration-500 ${
-          hideLoader ? "opacity-0 pointer-events-none" : "opacity-100"
-        } z-50`}
+        className={`fixed inset-0 bg-white transition-opacity duration-500 
+        ${hideLoader ? 'opacity-0 pointer-events-none' : 'opacity-100'} 
+        ${showStreakAnimation ? 'z-50' : '-z-10'}`}
       >
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
             <div className="flex items-center justify-center mb-4">
               <span className="text-6xl animate-bounce">🔥</span>
             </div>
-            <div className="text-4xl font-bold text-gray-800 animate-pulse">
-              {count} Day Streak!
+            <div className="text-4xl font-bold text-gray-800 ">
+              {streak} Day Streak!
             </div>
           </div>
         </div>
       </div>
 
-      <div
-        className={`transition-all duration-700 transform ${
-          showLoader ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-        }`}
-      >
+      <div className={`transition-all duration-700 transform ${showStreakAnimation ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
         <div className="min-h-screen flex flex-col mt-10">
           <Header />
           <div
@@ -580,7 +608,7 @@ export default function PomodoroTimer() {
               </div>
 
               <div className="text-center text-sm text-gray-500">
-                Total Time Studied: {formatTime(timeStudied)}
+                Time studied: {formatTime(timeStudiedRef.current)}
               </div>
             </div>
           </div>
