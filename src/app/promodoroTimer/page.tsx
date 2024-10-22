@@ -406,7 +406,7 @@ export default function PomodoroTimer() {
       const now = Date.now();
       const timeSinceLastUpdate = now - lastStreakUpdate;
 
-      if (timeSinceLastUpdate >= 20000 && !isAnimating) {
+      if (timeSinceLastUpdate >= 86400 && !isAnimating) {
         const newStreak = streak + 1;
         setIsAnimating(true);
         setShowStreakAnimation(true);
