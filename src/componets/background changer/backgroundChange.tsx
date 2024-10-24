@@ -30,7 +30,7 @@ const BackgroundChanger: React.FC<BackgroundChangerProps> = ({
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg space-y-4">
+    <div className="bg-white p-4 rounded-lg space-y-4 mb-0 ">
       <div>
         <input
           type="text"

@@ -603,8 +603,9 @@ export default function PomodoroTimer() {
               )}
 
               <div className="containerLinks">
+              <YoutubePlayer />
                 <BackGroundChanger setBackground={setBackground} />
-                <YoutubePlayer />
+                
               </div>
 
               <div className="text-center text-sm text-gray-500">
