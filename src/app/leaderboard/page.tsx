@@ -48,19 +48,15 @@ const MedalIcon = ({ rank }: { rank: number }) => {
   );
 };
 
-const formatStudyTime = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const days = Math.floor(hours / 24);
-  const remainingHours = hours % 24;
 
-  if (days > 0) {
-    return `${days} day${days > 1 ? "s" : ""} ${remainingHours} hour${
-      remainingHours !== 1 ? "s" : ""
-    }`;
-  } else {
-    return `${hours} hour${hours !== 1 ? "s" : ""}`;
-  }
+const formatStudyTime = (seconds: number) => {
+  const totalMinutes = Math.floor(seconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${totalMinutes < 60 ? "min" : "hours"}`;
 };
+
 
 export default function Leaderboard() {
   const [leaderboardData, setLeaderboardData] = useState<UserData[]>([]);
