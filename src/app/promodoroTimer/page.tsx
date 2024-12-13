@@ -358,7 +358,7 @@ export default function PomodoroTimer() {
           [TIMER_MODES.POMODORO]: 40,
           [TIMER_MODES.SHORT_BREAK]: 5,
         }));
-        newBackgroundColor = "#e6ffe6";
+        newBackgroundColor = "#f4976c";
         bodiesBackgroundColor = "#f4976c";
         break;
       case MOODS.BLOCKED:
@@ -367,9 +367,14 @@ export default function PomodoroTimer() {
         newBackgroundColor = "#ffdddd";
         bodiesBackgroundColor = "#FFECB3";
         break;
-      case MOODS.DISTRACTED:
+      case MOODS.TIRED:
         action = "Try to break up your tasks.";
-        newBackgroundColor = "#A3EBB1";
+        newBackgroundColor = "#e6ffe6";
+        bodiesBackgroundColor = "#e6ffe6";
+        break;
+      case MOODS.DISTRACTED:
+         action = "Try to break up your tasks.";
+         newBackgroundColor = "#A3EBB1";
         bodiesBackgroundColor = "#A3EBB1";
         break;
       default:
@@ -408,7 +413,7 @@ export default function PomodoroTimer() {
       const now = Date.now();
       const timeSinceLastUpdate = now - lastStreakUpdate;
 
-      if (timeSinceLastUpdate >= 86400 && !isAnimating) {
+      if (timeSinceLastUpdate === 86400 && !isAnimating) {
         const newStreak = streak + 1;
         setIsAnimating(true);
         setShowStreakAnimation(true);
@@ -610,8 +615,9 @@ export default function PomodoroTimer() {
               )}
 
               <div className="containerLinks">
+              <YoutubePlayer />
                 <BackGroundChanger setBackground={setBackground} />
-                <YoutubePlayer />
+                
               </div>
 
               <div className="text-center text-sm text-gray-500">
