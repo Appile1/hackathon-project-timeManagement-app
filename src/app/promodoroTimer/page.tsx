@@ -381,7 +381,7 @@ export default function PomodoroTimer() {
     setBackgroundColor(newBackgroundColor);
     setBodyColor(bodiesBackgroundColor);
   };
-  
+
   const [streak, setStreak] = useState<number | null>(null);
   const [lastStreakUpdate, setLastStreakUpdate] = useState<number | null>(null);
   const [displayStreak, setDisplayStreak] = useState<number>(0);
@@ -394,7 +394,9 @@ export default function PomodoroTimer() {
       const savedStreak = Number(localStorage.getItem("streak")) || 1;
       setStreak(savedStreak);
       setDisplayStreak(savedStreak);
-      setLastStreakUpdate(Number(localStorage.getItem("lastStreakUpdate")) || Date.now());
+      setLastStreakUpdate(
+        Number(localStorage.getItem("lastStreakUpdate")) || Date.now()
+      );
       setHideLoader(false);
     }
   }, []);
@@ -414,21 +416,20 @@ export default function PomodoroTimer() {
 
         // Start at current streak and animate up
         setDisplayStreak(streak);
-        
+
         setTimeout(() => {
           setDisplayStreak(newStreak);
           setStreak(newStreak);
           setLastStreakUpdate(now);
-          
+
           localStorage.setItem("streak", String(newStreak));
           localStorage.setItem("lastStreakUpdate", String(now));
-          
+
           setTimeout(() => {
             setHideLoader(true);
             setIsAnimating(false);
           }, 900);
         }, 1000); // Show current streak for 1 second before incrementing
-
       } else {
         setHideLoader(true);
         setShowStreakAnimation(true);
@@ -437,23 +438,23 @@ export default function PomodoroTimer() {
 
     return () => clearInterval(checkStreak);
   }, [streak, lastStreakUpdate, isAnimating]);
-  
 
   // Modified streak display in render
-  const streakDisplay = streak === null ? (
-    <div className="hidden">Loading...</div>
-  ) : (
-    <div className="text-4xl font-bold text-black-800 ">
-      {streak} Day Streak!
-    </div>
-  );
+  const streakDisplay =
+    streak === null ? (
+      <div className="hidden">Loading...</div>
+    ) : (
+      <div className="text-4xl font-bold text-black-800 ">
+        {streak} Day Streak!
+      </div>
+    );
   // Modify your return statement to include the streak animation
   return (
     <div className="min-h-screen">
       <div
         className={`fixed inset-0 bg-white transition-opacity duration-500 
-        ${hideLoader ? 'opacity-0 pointer-events-none' : 'opacity-100'} 
-        ${showStreakAnimation ? 'z-50' : '-z-10'}`}
+        ${hideLoader ? "opacity-0 pointer-events-none" : "opacity-100"} 
+        ${showStreakAnimation ? "z-50" : "-z-10"}`}
       >
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
@@ -467,7 +468,13 @@ export default function PomodoroTimer() {
         </div>
       </div>
 
-      <div className={`transition-all duration-700 transform ${showStreakAnimation ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
+      <div
+        className={`transition-all duration-700 transform ${
+          showStreakAnimation
+            ? "translate-y-0 opacity-100"
+            : "translate-y-8 opacity-0"
+        }`}
+      >
         <div className="min-h-screen flex flex-col mt-10">
           <Header />
           <div
@@ -573,12 +580,12 @@ export default function PomodoroTimer() {
                 </div>
               )}
 
-              <button
+              {/* <button
                 onClick={() => setShowMoodInput((prev) => !prev)}
                 className="w-full mb-4 py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors"
               >
                 Select Mood
-              </button>
+              </button> */}
 
               {showMoodInput && (
                 <div className="grid grid-cols-2 gap-2 mb-4">
