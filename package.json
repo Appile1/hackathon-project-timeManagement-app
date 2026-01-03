@@ -22,7 +22,7 @@
     "framer-motion": "^11.9.0",
     "init": "^0.1.2",
     "lucide-react": "^0.446.0",
-    "next": "14.2.7",
+    "next": "14.2.35",
     "openai": "^4.68.0",
     "pdf-parse": "^1.1.1",
     "react": "^18",
